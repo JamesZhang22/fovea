@@ -1,6 +1,10 @@
 # Local planning docs
 context/
 
+# Datasets and model weights, never committed
+data/
+models/
+
 # macOS
 .DS_Store
 
