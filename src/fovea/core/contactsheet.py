@@ -27,6 +27,7 @@ figcaption {{ padding: 4px 2px; color: #999; }}
 
 
 def render_file(entry: dict, out_dir: Path) -> str:
+    """Write one thumbnail with AF boxes drawn, returns the image filename or '' on failure."""
     path = Path(entry["path"])
     previews = cr3.read_previews(path)
     src = previews.full or previews.prvw

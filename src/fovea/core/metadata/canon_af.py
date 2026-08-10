@@ -30,6 +30,7 @@ class AFFrame:
 
 
 def _ints(v: object) -> list[int]:
+    """Exiftool array tags arrive as space-separated strings, single values as numbers."""
     if isinstance(v, str):
         return [int(x) for x in v.split()]
     if isinstance(v, (int, float)):
@@ -38,6 +39,7 @@ def _ints(v: object) -> list[int]:
 
 
 def _bit_indices(words: list[int]) -> set[int]:
+    """Set bit positions across a list of 16-bit words, bit j of word k = index 16k+j."""
     out = set()
     for k, w in enumerate(words):
         w &= 0xFFFF
@@ -48,6 +50,7 @@ def _bit_indices(words: list[int]) -> set[int]:
 
 
 def parse_af_frame(meta: dict) -> AFFrame | None:
+    """Canon AFInfo2 metadata to pixel-space AF boxes, None if required tags are missing."""
     n = int(meta.get("ValidAFPoints") or 0)
     orientation = int(meta.get("Orientation") or 1)
     if n == 0:

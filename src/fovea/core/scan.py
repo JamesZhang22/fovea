@@ -13,6 +13,7 @@ def find_cr3s(folder: Path) -> list[Path]:
 
 
 def scan_folder(folder: Path, cache: Cache | None = None) -> list[dict]:
+    """Build manifest entries for every CR3 under folder, exiftool only runs on cache misses."""
     paths = find_cr3s(folder)
     entries: list[dict] = []
     missing: list[Path] = []
@@ -38,6 +39,7 @@ def scan_folder(folder: Path, cache: Cache | None = None) -> list[dict]:
 
 
 def build_entry(meta: dict) -> dict:
+    """Raw exiftool tags to one manifest entry with parsed AF geometry."""
     frame = parse_af_frame(meta)
     return {
         "path": meta["SourceFile"],

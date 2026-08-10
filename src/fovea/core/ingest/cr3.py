@@ -22,6 +22,7 @@ class Cr3Previews:
 
 
 def iter_boxes(buf: bytes, start: int, end: int) -> Iterator[tuple[bytes, int, int]]:
+    """Yield (type, payload_start, box_end) for each ISO-BMFF box in buf[start:end]."""
     off = start
     while off + 8 <= end:
         size, typ = struct.unpack_from(">I4s", buf, off)
@@ -40,6 +41,7 @@ def iter_boxes(buf: bytes, start: int, end: int) -> Iterator[tuple[bytes, int, i
 
 
 def _find_jpeg_in_payload(buf: bytes, start: int, end: int) -> ByteRange | None:
+    """Locate an embedded JPEG inside a preview box payload by its SOI marker."""
     soi = buf.find(JPEG_SOI, start, end)
     if soi == -1:
         return None
@@ -47,6 +49,7 @@ def _find_jpeg_in_payload(buf: bytes, start: int, end: int) -> ByteRange | None:
 
 
 def _trak_first_sample(buf: bytes, start: int, end: int) -> ByteRange | None:
+    """Byte range of a trak's first media sample, from its stsz size and stco/co64 offset."""
     stbl = None
     node = (start, end)
     for name in (b"mdia", b"minf", b"stbl"):
@@ -71,6 +74,7 @@ def _trak_first_sample(buf: bytes, start: int, end: int) -> ByteRange | None:
 
 
 def parse_previews(f: BinaryIO) -> Cr3Previews:
+    """Find the THMB, PRVW, and full-size trak JPEG byte ranges in an open CR3."""
     head = f.read(HEADER_READ)
     full = prvw = thmb = None
     for typ, s, e in iter_boxes(head, 0, len(head)):

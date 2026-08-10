@@ -5,6 +5,7 @@ DEFAULT_GAP_SECONDS = 2.0
 
 
 def shot_time(meta: dict) -> float | None:
+    """Epoch seconds from EXIF DateTimeOriginal plus subseconds, None if absent/unparseable."""
     dt = meta.get("DateTimeOriginal")
     if not dt:
         return None
@@ -19,7 +20,7 @@ def shot_time(meta: dict) -> float | None:
 
 
 def group_bursts(entries: list[dict], gap_seconds: float = DEFAULT_GAP_SECONDS) -> list[list[dict]]:
-    """Cluster scan entries into bursts by shot-time gaps, untimestamped entries become singletons."""
+    """Cluster entries into bursts by shot-time gaps, untimestamped entries become singletons."""
     timed, untimed = [], []
     for e in entries:
         ts = shot_time(e["meta"])
