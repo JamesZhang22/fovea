@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-LATTICE_THRESHOLD = 100
+LATTICE_THRESHOLD = 100  # ValidAFPoints above this means the R7 dumped its full AF lattice
 
 
 @dataclass(frozen=True)

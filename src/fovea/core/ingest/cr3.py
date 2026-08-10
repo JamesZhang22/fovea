@@ -4,8 +4,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import BinaryIO
 
-HEADER_READ = 200_000
-JPEG_SOI = b"\xff\xd8"
+HEADER_READ_BYTES = 200_000  # enough to cover ftyp + moov + uuid preview boxes on the R7
+JPEG_SOI = b"\xff\xd8"  # JPEG start-of-image marker
 
 
 @dataclass(frozen=True)
@@ -75,7 +75,7 @@ def _trak_first_sample(buf: bytes, start: int, end: int) -> ByteRange | None:
 
 def parse_previews(f: BinaryIO) -> Cr3Previews:
     """Find the THMB, PRVW, and full-size trak JPEG byte ranges in an open CR3."""
-    head = f.read(HEADER_READ)
+    head = f.read(HEADER_READ_BYTES)
     full = prvw = thmb = None
     for typ, s, e in iter_boxes(head, 0, len(head)):
         if typ == b"moov":

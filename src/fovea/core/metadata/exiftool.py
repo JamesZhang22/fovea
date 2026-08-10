@@ -32,7 +32,7 @@ TAGS = [
     "EyeDetection",
 ]
 
-SENTINEL = b"{ready}"
+SENTINEL = b"{ready}"  # exiftool prints this after each -execute completes
 
 
 class ExifTool:
