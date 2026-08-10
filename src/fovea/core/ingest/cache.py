@@ -1,5 +1,6 @@
 import json
 import sqlite3
+import threading
 from pathlib import Path
 
 SCHEMA = """
@@ -17,7 +18,8 @@ CREATE TABLE IF NOT EXISTS entries (
 class Cache:
     def __init__(self, db_path: Path) -> None:
         db_path.parent.mkdir(parents=True, exist_ok=True)
-        self.conn = sqlite3.connect(db_path)
+        self.conn = sqlite3.connect(db_path, check_same_thread=False)
+        self.lock = threading.Lock()
         self.conn.execute(SCHEMA)
 
     def _stat(self, path: Path) -> tuple[int, int]:
@@ -26,19 +28,21 @@ class Cache:
 
     def get(self, path: Path, kind: str) -> bytes | None:
         mtime, size = self._stat(path)
-        row = self.conn.execute(
-            "SELECT data FROM entries WHERE path=? AND kind=? AND mtime=? AND size=?",
-            (str(path), kind, mtime, size),
-        ).fetchone()
+        with self.lock:
+            row = self.conn.execute(
+                "SELECT data FROM entries WHERE path=? AND kind=? AND mtime=? AND size=?",
+                (str(path), kind, mtime, size),
+            ).fetchone()
         return row[0] if row else None
 
     def put(self, path: Path, kind: str, data: bytes) -> None:
         mtime, size = self._stat(path)
-        self.conn.execute(
-            "INSERT OR REPLACE INTO entries (path, mtime, size, kind, data) VALUES (?,?,?,?,?)",
-            (str(path), mtime, size, kind, data),
-        )
-        self.conn.commit()
+        with self.lock:
+            self.conn.execute(
+                "INSERT OR REPLACE INTO entries (path, mtime, size, kind, data) VALUES (?,?,?,?,?)",
+                (str(path), mtime, size, kind, data),
+            )
+            self.conn.commit()
 
     def get_json(self, path: Path, kind: str) -> dict | None:
         data = self.get(path, kind)
