@@ -1,0 +1,81 @@
+import json
+import subprocess
+from pathlib import Path
+from types import TracebackType
+
+TAGS = [
+    "SourceFile",
+    "FileName",
+    "DateTimeOriginal",
+    "SubSecTimeOriginal",
+    "ExposureTime",
+    "FNumber",
+    "ISO",
+    "FocalLength",
+    "Orientation",
+    "ImageWidth",
+    "ImageHeight",
+    "FocusMode",
+    "ContinuousDrive",
+    "AFAreaMode",
+    "NumAFPoints",
+    "ValidAFPoints",
+    "AFImageWidth",
+    "AFImageHeight",
+    "AFAreaXPositions",
+    "AFAreaYPositions",
+    "AFAreaWidths",
+    "AFAreaHeights",
+    "AFPointsInFocus",
+    "AFPointsSelected",
+    "SubjectToDetect",
+    "EyeDetection",
+]
+
+SENTINEL = b"{ready}"
+
+
+class ExifTool:
+    """Resident `exiftool -stay_open` process; ~60x faster than per-file spawns."""
+
+    def __init__(self) -> None:
+        self.proc = subprocess.Popen(
+            ["exiftool", "-stay_open", "True", "-@", "-"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+        )
+
+    def execute(self, *args: str) -> bytes:
+        assert self.proc.stdin and self.proc.stdout
+        payload = "\n".join([*args, "-execute\n"]).encode()
+        self.proc.stdin.write(payload)
+        self.proc.stdin.flush()
+        out = b""
+        while not out.rstrip().endswith(SENTINEL):
+            chunk = self.proc.stdout.read1(65536)
+            if not chunk:
+                raise RuntimeError("exiftool died")
+            out += chunk
+        return out.rstrip()[: -len(SENTINEL)]
+
+    def metadata(self, paths: list[Path], tags: list[str] = TAGS) -> list[dict]:
+        if not paths:
+            return []
+        args = ["-j", "-n", *[f"-{t}" for t in tags], *[str(p) for p in paths]]
+        out = self.execute(*args)
+        return json.loads(out) if out.strip() else []
+
+    def close(self) -> None:
+        if self.proc.stdin:
+            self.proc.stdin.write(b"-stay_open\nFalse\n")
+            self.proc.stdin.flush()
+        self.proc.wait(timeout=5)
+
+    def __enter__(self) -> "ExifTool":
+        return self
+
+    def __exit__(
+        self, t: type[BaseException] | None, v: BaseException | None, tb: TracebackType | None
+    ) -> None:
+        self.close()
