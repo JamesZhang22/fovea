@@ -12,16 +12,18 @@ from fovea.core.score.classical import metrics, rank_burst, to_gray
 
 RATING_BEST = 4
 RATING_TOP = 3
-MIN_PATCH = 256
+MIN_PATCH_PX = 256  # focus metrics get unstable below this patch size
 
 
 @dataclass
 class PipelineConfig:
     group: bool = True
     score: bool = True
+    detect: bool = False
     export: bool = True
     gap_seconds: float = 2.0
     decode_width: int = 3480
+    detect_threshold: float = 0.4
     metric: str = "brenner"
     top_rank: float = 0.8
     workers: int = 10
@@ -36,6 +38,9 @@ def run_pipeline(folder: Path, config: PipelineConfig, cache: Cache | None = Non
         for e in burst:
             e["burst"] = i
             e["burst_size"] = len(burst)
+
+    if config.detect:
+        _detect_stage(entries, config, cache)
 
     if config.score:
         with ThreadPoolExecutor(max_workers=config.workers) as pool:
@@ -84,14 +89,41 @@ def score_patch_box(entry: dict, width: int, height: int) -> tuple[int, int, int
     else:
         x0, y0, x1, y1 = width / 4, height / 4, 3 * width / 4, 3 * height / 4
 
-    pad_x = max(0.0, MIN_PATCH - (x1 - x0)) / 2
-    pad_y = max(0.0, MIN_PATCH - (y1 - y0)) / 2
+    pad_x = max(0.0, MIN_PATCH_PX - (x1 - x0)) / 2
+    pad_y = max(0.0, MIN_PATCH_PX - (y1 - y0)) / 2
     return (
         max(0, int(x0 - pad_x)),
         max(0, int(y0 - pad_y)),
         min(width, int(x1 + pad_x)),
         min(height, int(y1 + pad_y)),
     )
+
+
+def _detect_stage(entries: list[dict], config: PipelineConfig, cache: Cache | None) -> None:
+    """Annotate entries with bird boxes in full-resolution pixel coordinates."""
+    from dataclasses import asdict
+
+    from fovea.core.detect.bird import DETECT_WIDTH_PX, BirdDetector
+
+    detector = None
+    kind = f"birds:{config.detect_threshold}"
+    for e in entries:
+        path = Path(e["path"])
+        if cache and (cached := cache.get_json(path, kind)) is not None:
+            e["birds"] = cached["boxes"]
+            continue
+        if detector is None:
+            detector = BirdDetector(config.detect_threshold)
+        previews = cr3.read_previews(path)
+        src = previews.full or previews.prvw
+        if src is None:
+            e["birds"] = []
+            continue
+        im = decode.decode_scaled(cr3.read_range(path, src), DETECT_WIDTH_PX)
+        factor = (e["meta"].get("ImageWidth") or im.width) / im.width
+        e["birds"] = [asdict(b.scaled(factor)) for b in detector.detect(im)]
+        if cache:
+            cache.put_json(path, kind, {"boxes": e["birds"]})
 
 
 def _score_entry(entry: dict, config: PipelineConfig, cache: Cache | None) -> dict | None:

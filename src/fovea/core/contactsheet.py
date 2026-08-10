@@ -6,9 +6,12 @@ from PIL import ImageDraw
 
 from fovea.core.ingest import cr3, decode
 
-THUMB_WIDTH = 800
-IN_FOCUS = (255, 40, 40)
-REPORTED = (255, 220, 0)
+THUMB_WIDTH_PX = 800
+
+# overlay colors
+IN_FOCUS = (255, 40, 40)  # red, AF points the camera reports as in focus
+REPORTED = (255, 220, 0)  # yellow, AF points reported but not in focus
+BIRD = (60, 220, 60)  # green, detected bird bounding boxes
 
 PAGE = """<!doctype html>
 <meta charset="utf-8"><title>fovea contact sheet</title>
@@ -33,13 +36,18 @@ def render_file(entry: dict, out_dir: Path) -> str:
     src = previews.full or previews.prvw
     if src is None:
         return ""
-    im = decode.thumbnail(cr3.read_range(path, src), THUMB_WIDTH)
+    im = decode.thumbnail(cr3.read_range(path, src), THUMB_WIDTH_PX)
+
+    img_w = entry["meta"].get("ImageWidth") or im.width
+    scale = im.width / max(img_w, 1)
+    draw = ImageDraw.Draw(im)
+
+    for b in entry.get("birds") or []:
+        box = [b["x0"] * scale, b["y0"] * scale, b["x1"] * scale, b["y1"] * scale]
+        draw.rectangle(box, outline=BIRD, width=3)
 
     af = entry["af"]
     if af and af["display_points"]:
-        img_w = entry["meta"].get("ImageWidth") or im.width
-        scale = im.width / max(img_w, 1)
-        draw = ImageDraw.Draw(im)
         for p in af["display_points"]:
             x0 = (p["cx"] - p["w"] / 2) * scale
             y0 = (p["cy"] - p["h"] / 2) * scale
