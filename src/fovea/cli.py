@@ -48,7 +48,7 @@ def main() -> None:
 
     sheet = sub.add_parser("contactsheet", help="render an HTML contact sheet with AF overlays")
     sheet.add_argument("folder")
-    sheet.add_argument("-o", "--out", help="output directory (default <folder>/.fovea/contactsheet)")
+    sheet.add_argument("-o", "--out", help="output dir (default <folder>/.fovea/contactsheet)")
     sheet.add_argument("--no-cache", action="store_true")
     sheet.set_defaults(func=cmd_contactsheet)
 

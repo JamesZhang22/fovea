@@ -1,7 +1,8 @@
 import struct
+from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
-from typing import BinaryIO, Iterator
+from typing import BinaryIO
 
 HEADER_READ = 200_000
 JPEG_SOI = b"\xff\xd8"
@@ -55,7 +56,7 @@ def _trak_first_sample(buf: bytes, start: int, end: int) -> ByteRange | None:
         node = found
     stbl = node
     size = offset = None
-    for typ, s, e in iter_boxes(buf, *stbl):
+    for typ, s, _ in iter_boxes(buf, *stbl):
         if typ == b"stsz":
             fixed, count = struct.unpack_from(">II", buf, s + 4)
             if count:

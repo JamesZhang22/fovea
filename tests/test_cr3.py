@@ -32,8 +32,10 @@ def test_parse_previews_finds_trak_jpeg_and_prvw() -> None:
     trak = box(b"trak", box(b"mdia", box(b"minf", stbl(len(JPEG), 8))))
     moov = box(b"moov", trak)
     prvw_payload = b"\x00" * 8 + JPEG
-    prvw = uuid_box(b"\xea\xf4\x2b\x5e\x1c\x98\x4b\x88\xb9\xfb\xb7\xdc\x40\x6e\x4d\x16",
-                    box(b"PRVW", prvw_payload))
+    prvw = uuid_box(
+        b"\xea\xf4\x2b\x5e\x1c\x98\x4b\x88\xb9\xfb\xb7\xdc\x40\x6e\x4d\x16",
+        box(b"PRVW", prvw_payload),
+    )
     full = mdat + moov + prvw
 
     previews = parse_previews(io.BytesIO(full))

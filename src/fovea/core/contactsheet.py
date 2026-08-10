@@ -44,7 +44,8 @@ def render_file(entry: dict, out_dir: Path) -> str:
             y0 = (p["cy"] - p["h"] / 2) * scale
             x1 = (p["cx"] + p["w"] / 2) * scale
             y1 = (p["cy"] + p["h"] / 2) * scale
-            draw.rectangle([x0, y0, x1, y1], outline=IN_FOCUS if p["in_focus"] else REPORTED, width=2)
+            color = IN_FOCUS if p["in_focus"] else REPORTED
+            draw.rectangle([x0, y0, x1, y1], outline=color, width=2)
 
     name = path.stem + ".jpg"
     im.save(out_dir / "images" / name, quality=85)
@@ -57,7 +58,7 @@ def write_contactsheet(entries: list[dict], out_dir: Path) -> Path:
         names = list(pool.map(lambda e: render_file(e, out_dir), entries))
 
     cells = []
-    for entry, name in zip(entries, names):
+    for entry, name in zip(entries, names, strict=True):
         if not name:
             continue
         af = entry["af"]

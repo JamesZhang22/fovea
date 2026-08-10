@@ -72,7 +72,7 @@ class ExifTool:
             self.proc.stdin.flush()
         self.proc.wait(timeout=5)
 
-    def __enter__(self) -> "ExifTool":
+    def __enter__(self) -> ExifTool:
         return self
 
     def __exit__(
