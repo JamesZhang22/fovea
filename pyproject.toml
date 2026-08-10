@@ -5,7 +5,9 @@ description = "Bird photo culling for macOS — eye-critical focus scoring for C
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "pillow>=12.3.0",
+]
 
 [project.scripts]
 fovea = "fovea.cli:main"
