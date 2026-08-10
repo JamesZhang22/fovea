@@ -15,6 +15,11 @@ records its measurements under a `fovea:` XMP namespace. Existing sidecars are n
 overwritten. Every pipeline stage can be toggled off (`--no-group`, `--no-score`,
 `--no-export`).
 
+## Samples
+
+### Bird and AF detection
+![Bird and AF detection](images/README/bird-af-detection.png)
+
 ## Requirements
 
 - macOS, Python 3.14+, [uv](https://docs.astral.sh/uv/)
