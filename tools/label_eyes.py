@@ -42,24 +42,32 @@ body { background: #111; color: #ccc; font: 14px system-ui; margin: 0; text-alig
         border-radius: 50%; pointer-events: none; display: none; }
 #mark::after { content: ""; position: absolute; left: 50%; top: 50%; width: 2px; height: 2px;
                margin: -1px; background: #f33; }
+#hint { position: absolute; width: 22px; height: 22px; margin: -11px; border: 2px dashed #fa0;
+        border-radius: 50%; pointer-events: none; display: none; }
 kbd { background: #333; padding: 1px 5px; border-radius: 3px; }
 </style>
 <div id="bar"></div>
-<div id="stage"><img id="img"><div id="loupe"></div><div id="mark"></div></div>
-<div><kbd>click</kbd> label eye &nbsp; <kbd>s</kbd> skip &nbsp; <kbd>&larr;</kbd><kbd>&rarr;</kbd>
-navigate &nbsp; <kbd>u</kbd> undo last</div>
+<div id="stage"><img id="img"><div id="loupe"></div><div id="mark"></div><div id="hint"></div></div>
+<div><kbd>click</kbd> label eye &nbsp; <kbd>enter</kbd> accept suggestion &nbsp; <kbd>s</kbd> skip
+&nbsp; <kbd>&larr;</kbd><kbd>&rarr;</kbd> navigate &nbsp; <kbd>u</kbd> undo last</div>
 <script>
 const ZOOM = 4;
 let cur = null;
 const img = document.getElementById("img"), loupe = document.getElementById("loupe"),
-      mark = document.getElementById("mark"), bar = document.getElementById("bar");
+      mark = document.getElementById("mark"), hint = document.getElementById("hint"),
+      bar = document.getElementById("bar");
+
+function place(el, pt) {
+  if (!cur || !pt) { el.style.display = "none"; return; }
+  const r = img.getBoundingClientRect();
+  el.style.display = "block";
+  el.style.left = pt.x * r.width + "px";
+  el.style.top = pt.y * r.height + "px";
+}
 
 function placeMark() {
-  if (!cur || !cur.label) { mark.style.display = "none"; return; }
-  const r = img.getBoundingClientRect();
-  mark.style.display = "block";
-  mark.style.left = cur.label.x * r.width + "px";
-  mark.style.top = cur.label.y * r.height + "px";
+  place(mark, cur && cur.label);
+  place(hint, cur && cur.suggest);
 }
 
 async function load(i) {
@@ -94,7 +102,11 @@ img.addEventListener("click", async e => {
 
 document.addEventListener("keydown", async e => {
   if (!cur) return;
-  if (e.key === "s") {
+  if (e.key === "Enter" && cur.suggest) {
+    const resp = await fetch("/label", {method: "POST",
+      body: JSON.stringify({id: cur.id, accept: true})});
+    load((await resp.json()).next);
+  } else if (e.key === "s") {
     const resp = await fetch("/label", {method: "POST",
       body: JSON.stringify({id: cur.id, skip: true})});
     load((await resp.json()).next);
@@ -113,7 +125,7 @@ fetch("/start").then(r => r.json()).then(d => load(d.i));
 
 
 class Labeler:
-    def __init__(self, folder: Path, out: Path) -> None:
+    def __init__(self, folder: Path, out: Path, prelabels: Path | None = None) -> None:
         self.out = out
         entries = run_pipeline(
             folder,
@@ -130,6 +142,11 @@ class Labeler:
             for line in out.read_text().splitlines():
                 row = json.loads(line)
                 self.labels[row["id"]] = row
+        self.suggestions: dict[str, dict] = {}
+        if prelabels and prelabels.exists():
+            for line in prelabels.read_text().splitlines():
+                row = json.loads(line)
+                self.suggestions[row["id"]] = row
         self.lock = threading.Lock()
 
     def first_unlabeled(self) -> int:
@@ -164,8 +181,12 @@ class Labeler:
         im.save(buf, "JPEG", quality=92)
         return buf.getvalue()
 
+    def _to_crop_fraction(self, item: dict, eye: list[float]) -> dict:
+        x0, y0, x1, y1 = self.crop_region(item)
+        return {"x": (eye[0] - x0) / (x1 - x0), "y": (eye[1] - y0) / (y1 - y0)}
+
     def item_state(self, i: int) -> dict:
-        """Item payload for the UI, label echoed back as crop-fraction coordinates."""
+        """Item payload for the UI, label and suggestion as crop-fraction coordinates."""
         item = self.items[i]
         row = self.labels.get(item["id"])
         label = None
@@ -174,11 +195,12 @@ class Labeler:
             if row["eye"] is None:
                 skipped = True
             else:
-                x0, y0, x1, y1 = self.crop_region(item)
-                label = {
-                    "x": (row["eye"][0] - x0) / (x1 - x0),
-                    "y": (row["eye"][1] - y0) / (y1 - y0),
-                }
+                label = self._to_crop_fraction(item, row["eye"])
+        suggest = None
+        srow = self.suggestions.get(item["id"])
+        if srow and not row:
+            suggest = self._to_crop_fraction(item, srow["eye"])
+            suggest["conf"] = srow.get("confidence")
         return {
             "i": i,
             "n": len(self.items),
@@ -187,6 +209,7 @@ class Labeler:
             "img": f"/img/{i}",
             "label": label,
             "skipped": skipped,
+            "suggest": suggest,
             "progress": self.progress(),
         }
 
@@ -257,6 +280,8 @@ def make_handler(labeler: Labeler):
                 item = labeler.items[i]
                 if body.get("skip"):
                     labeler.record(item, None)
+                elif body.get("accept"):
+                    labeler.record(item, tuple(labeler.suggestions[item["id"]]["eye"]))
                 else:
                     x0, y0, x1, y1 = labeler.crop_region(item)
                     labeler.record(item, (x0 + body["x"] * (x1 - x0), y0 + body["y"] * (y1 - y0)))
@@ -273,12 +298,16 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="label bird eye keypoints in the browser")
     parser.add_argument("folder")
     parser.add_argument("--out", help="labels JSONL path (default <folder>/eye_labels.jsonl)")
+    parser.add_argument(
+        "--prelabels", help="suggestions JSONL (default <folder>/eye_prelabels.jsonl)"
+    )
     parser.add_argument("--port", type=int, default=7333)
     args = parser.parse_args()
 
     folder = Path(args.folder).expanduser().resolve()
     out = Path(args.out) if args.out else folder / "eye_labels.jsonl"
-    labeler = Labeler(folder, out)
+    prelabels = Path(args.prelabels) if args.prelabels else folder / "eye_prelabels.jsonl"
+    labeler = Labeler(folder, out, prelabels)
     if not labeler.items:
         sys.exit("no bird detections in this folder")
 
