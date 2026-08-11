@@ -1,0 +1,26 @@
+.PHONY: dev api test lint check gen-api build-ui
+
+dev:  ## api + ui dev servers together, Ctrl+C stops both
+	@trap 'kill 0' INT TERM EXIT; \
+	uv run python -m fovea.api.app & \
+	( cd ui && pnpm dev ) & \
+	wait
+
+api:  ## backend only
+	uv run python -m fovea.api.app
+
+test:
+	uv run pytest -q
+
+lint:
+	uv run ruff check . && uv run ruff format --check .
+
+check: lint test
+
+gen-api:  ## regenerate ui/src/lib/api-types.d.ts from the FastAPI schema
+	uv run python -c "from fovea.api.app import create_app; import json; \
+	print(json.dumps(create_app().openapi()))" > ui/openapi.json
+	cd ui && pnpm exec openapi-typescript openapi.json -o src/lib/api-types.d.ts && rm openapi.json
+
+build-ui:
+	cd ui && pnpm build
