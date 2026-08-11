@@ -5,8 +5,8 @@ import {
   subscribeEvents,
   type Entry,
   type ProgressEvent,
-} from "./api";
-import { Grid } from "./Grid";
+} from "./lib/api";
+import { Grid } from "./components/Grid";
 
 export default function App() {
   const [path, setPath] = useState("data/labeling-set");

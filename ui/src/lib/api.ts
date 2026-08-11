@@ -1,42 +1,11 @@
-export interface Eye {
-  x: number;
-  y: number;
-  confidence: number;
-}
+import type { components } from "./api-types";
 
-export interface BirdBox {
-  x0: number;
-  y0: number;
-  x1: number;
-  y1: number;
-  confidence: number;
-}
+export type Entry = components["schemas"]["Entry"];
+export type Eye = components["schemas"]["Eye"];
+export type BirdBox = components["schemas"]["BirdBox"];
+export type AFPoint = components["schemas"]["AFPoint"];
 
-export interface AFPoint {
-  cx: number;
-  cy: number;
-  w: number;
-  h: number;
-  in_focus: boolean;
-  selected: boolean;
-}
-
-export interface Entry {
-  id: number;
-  name: string;
-  width: number;
-  height: number;
-  orientation: number;
-  burst: number;
-  burst_size: number;
-  rank: number | null;
-  metrics: Record<string, number> | null;
-  eye: Eye | null;
-  birds: BirdBox[] | null;
-  af: { lattice: boolean; display_points: AFPoint[] } | null;
-  shot_time: string | null;
-}
-
+// SSE events are outside the OpenAPI schema, mirrored from api/session.py
 export interface ProgressEvent {
   type: "progress" | "done" | "error";
   stage?: string;
