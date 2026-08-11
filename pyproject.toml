@@ -6,9 +6,11 @@ readme = "README.md"
 license = "MIT"
 requires-python = ">=3.14"
 dependencies = [
+    "fastapi>=0.141.1",
     "numpy>=2.5.2",
     "onnxruntime>=1.28.0",
     "pillow>=12.3.0",
+    "uvicorn>=0.52.1",
 ]
 
 [project.scripts]
@@ -22,7 +24,11 @@ build-backend = "hatchling.build"
 packages = ["src/fovea"]
 
 [dependency-groups]
-dev = ["pytest", "ruff"]
+dev = [
+    "httpx>=0.28.1",
+    "pytest",
+    "ruff",
+]
 ml = [
     "onnx>=1.22.0",
     "onnxscript>=0.7.1",

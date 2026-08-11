@@ -1,4 +1,5 @@
 import sys
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
@@ -33,9 +34,20 @@ class PipelineConfig:
     workers: int = 10
 
 
-def run_pipeline(folder: Path, config: PipelineConfig, cache: Cache | None = None) -> list[dict]:
+Progress = Callable[[str, int, int], None]
+
+
+def run_pipeline(
+    folder: Path,
+    config: PipelineConfig,
+    cache: Cache | None = None,
+    progress: Progress | None = None,
+) -> list[dict]:
     """Scan then run the enabled stages, returns entries annotated in place."""
+    tick = progress or (lambda stage, done, total: None)
+    tick("scan", 0, 0)
     entries = scan_folder(folder, cache)
+    tick("scan", len(entries), len(entries))
 
     bursts = group_bursts(entries, config.gap_seconds) if config.group else [[e] for e in entries]
     for i, burst in enumerate(bursts):
@@ -44,14 +56,17 @@ def run_pipeline(folder: Path, config: PipelineConfig, cache: Cache | None = Non
             e["burst_size"] = len(burst)
 
     if config.detect:
-        _detect_stage(entries, config, cache)
+        _detect_stage(entries, config, cache, tick)
 
     if config.eye:
-        _eye_stage(entries, config, cache)
+        _eye_stage(entries, config, cache, tick)
 
     if config.score:
+        scored = []
         with ThreadPoolExecutor(max_workers=config.workers) as pool:
-            scored = list(pool.map(lambda e: _score_entry(e, config, cache), entries))
+            for i, m in enumerate(pool.map(lambda e: _score_entry(e, config, cache), entries)):
+                scored.append(m)
+                tick("score", i + 1, len(entries))
         for e, m in zip(entries, scored, strict=True):
             e["metrics"] = m
         for burst in bursts:
@@ -61,11 +76,12 @@ def run_pipeline(folder: Path, config: PipelineConfig, cache: Cache | None = Non
 
     if config.export:
         written = skipped = 0
-        for e in entries:
+        for i, e in enumerate(entries):
             if _export_entry(e, config):
                 written += 1
             else:
                 skipped += 1
+            tick("export", i + 1, len(entries))
         print(f"sidecars: {written} written, {skipped} skipped (existing)", file=sys.stderr)
 
     return entries
@@ -120,7 +136,9 @@ def _clamp_padded(
     )
 
 
-def _detect_stage(entries: list[dict], config: PipelineConfig, cache: Cache | None) -> None:
+def _detect_stage(
+    entries: list[dict], config: PipelineConfig, cache: Cache | None, tick: Progress
+) -> None:
     """Annotate entries with bird boxes in full-resolution pixel coordinates."""
     from dataclasses import asdict
 
@@ -128,7 +146,8 @@ def _detect_stage(entries: list[dict], config: PipelineConfig, cache: Cache | No
 
     detector = None
     kind = f"birds:{config.detect_threshold}"
-    for e in entries:
+    for n, e in enumerate(entries):
+        tick("detect", n + 1, len(entries))
         path = Path(e["path"])
         if cache and (cached := cache.get_json(path, kind)) is not None:
             e["birds"] = cached["boxes"]
@@ -147,14 +166,17 @@ def _detect_stage(entries: list[dict], config: PipelineConfig, cache: Cache | No
             cache.put_json(path, kind, {"boxes": e["birds"]})
 
 
-def _eye_stage(entries: list[dict], config: PipelineConfig, cache: Cache | None) -> None:
+def _eye_stage(
+    entries: list[dict], config: PipelineConfig, cache: Cache | None, tick: Progress
+) -> None:
     """Locate the eye of each entry's most confident bird box."""
     from fovea.core.detect.eye import EyeLocator
 
     model_path = Path(config.eye_model)
     locator = None
     kind = f"eye:{model_path.stat().st_mtime_ns}"
-    for e in entries:
+    for n, e in enumerate(entries):
+        tick("eye", n + 1, len(entries))
         if not e.get("birds"):
             continue
         path = Path(e["path"])
