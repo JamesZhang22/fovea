@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import type { Entry } from "../lib/api";
-import { Cell } from "./Cell";
+import type { Entry } from "../../lib/api";
+import { Cell } from "../Cell/Cell";
+import "./Grid.css";
 
 const CELL_W = 236;
 const IMG_H = 157;
@@ -12,17 +13,21 @@ interface Props {
   entries: Entry[];
   selected: number | null;
   onSelect: (id: number) => void;
+  scrollPos: React.RefObject<number>;
 }
 
-export function Grid({ entries, selected, onSelect }: Props) {
+export function Grid({ entries, selected, onSelect, scrollPos }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const [viewport, setViewport] = useState({ top: 0, height: 800, width: 1200 });
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const update = () =>
+    el.scrollTop = scrollPos.current;
+    const update = () => {
+      scrollPos.current = el.scrollTop;
       setViewport({ top: el.scrollTop, height: el.clientHeight, width: el.clientWidth });
+    };
     update();
     el.addEventListener("scroll", update, { passive: true });
     const ro = new ResizeObserver(update);
@@ -31,7 +36,7 @@ export function Grid({ entries, selected, onSelect }: Props) {
       el.removeEventListener("scroll", update);
       ro.disconnect();
     };
-  }, []);
+  }, [scrollPos]);
 
   const cols = Math.max(1, Math.floor((viewport.width - GAP) / (CELL_W + GAP)));
   const rows = Math.ceil(entries.length / cols);

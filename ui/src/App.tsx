@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   fetchEntries,
   openFolder,
@@ -6,7 +6,9 @@ import {
   type Entry,
   type ProgressEvent,
 } from "./lib/api";
-import { Grid } from "./components/Grid";
+import { Detail } from "./components/Detail/Detail";
+import { Grid } from "./components/Grid/Grid";
+import "./App.css";
 
 export default function App() {
   const [path, setPath] = useState("data/labeling-set");
@@ -15,6 +17,8 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<number | null>(null);
   const [running, setRunning] = useState(false);
+  const current = selected !== null ? (entries.find((e) => e.id === selected) ?? null) : null;
+  const gridScroll = useRef(0);
 
   const open = useCallback(async () => {
     setError(null);
@@ -70,7 +74,16 @@ export default function App() {
         )}
         {error && <span className="error">{error}</span>}
       </header>
-      <Grid entries={entries} selected={selected} onSelect={setSelected} />
+      {current ? (
+        <Detail
+          entry={current}
+          entries={entries}
+          onSelect={setSelected}
+          onClose={() => setSelected(null)}
+        />
+      ) : (
+        <Grid entries={entries} selected={selected} onSelect={setSelected} scrollPos={gridScroll} />
+      )}
     </div>
   );
 }

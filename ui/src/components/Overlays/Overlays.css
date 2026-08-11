@@ -1,0 +1,31 @@
+.overlays {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.ov-af {
+  fill: none;
+  stroke: #ffdc00;
+  stroke-width: 6;
+}
+
+.ov-af-focus {
+  fill: none;
+  stroke: #ff2828;
+  stroke-width: 6;
+}
+
+.ov-eye {
+  fill: none;
+  stroke: #00dcff;
+  stroke-width: 6;
+}
+
+.ov-eye-weak {
+  fill: none;
+  stroke: #00dcff;
+  stroke-width: 6;
+  stroke-dasharray: 20 14;
+  opacity: 0.6;
+}

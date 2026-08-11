@@ -1,0 +1,57 @@
+.cell {
+  background: #1c1c1c;
+  border: 1px solid #2a2a2a;
+  border-radius: 6px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.cell:hover {
+  border-color: #444;
+}
+
+.cell-selected {
+  border-color: #2b6cb0;
+  outline: 1px solid #2b6cb0;
+}
+
+.cell img {
+  width: 100%;
+  object-fit: cover;
+  display: block;
+  background: #111;
+}
+
+.cell-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+}
+
+.cell-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #999;
+  font-size: 12px;
+}
+
+.badge {
+  background: #2a2a2a;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 11px;
+  color: #aaa;
+}
+
+.badge-best {
+  background: #3a3413;
+  color: #ffd85e;
+}
+
+.badge-eye {
+  background: #10333d;
+  color: #4dd7f5;
+}

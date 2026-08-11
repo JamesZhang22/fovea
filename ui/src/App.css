@@ -1,0 +1,53 @@
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.logo {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #eee;
+}
+
+header input {
+  flex: 0 1 420px;
+  background: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 5px;
+  color: #ddd;
+  padding: 5px 9px;
+  font: inherit;
+}
+
+header button {
+  background: #2b6cb0;
+  border: none;
+  border-radius: 5px;
+  color: #fff;
+  padding: 5px 14px;
+  font: inherit;
+  cursor: pointer;
+}
+
+header button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.progress {
+  color: #888;
+  font-variant-numeric: tabular-nums;
+}
+
+.error {
+  color: #f66;
+}

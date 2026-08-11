@@ -1,4 +1,5 @@
-import { thumbUrl, type Entry } from "../lib/api";
+import { thumbUrl, type Entry } from "../../lib/api";
+import "./Cell.css";
 
 const IMG_H = 157;
 
