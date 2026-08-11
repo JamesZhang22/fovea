@@ -1,0 +1,133 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background: #141414;
+  color: #ccc;
+  font: 13px system-ui, sans-serif;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.logo {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #eee;
+}
+
+header input {
+  flex: 0 1 420px;
+  background: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 5px;
+  color: #ddd;
+  padding: 5px 9px;
+  font: inherit;
+}
+
+header button {
+  background: #2b6cb0;
+  border: none;
+  border-radius: 5px;
+  color: #fff;
+  padding: 5px 14px;
+  font: inherit;
+  cursor: pointer;
+}
+
+header button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.progress {
+  color: #888;
+  font-variant-numeric: tabular-nums;
+}
+
+.error {
+  color: #f66;
+}
+
+.grid-scroll {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.cell {
+  background: #1c1c1c;
+  border: 1px solid #2a2a2a;
+  border-radius: 6px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.cell:hover {
+  border-color: #444;
+}
+
+.cell-selected {
+  border-color: #2b6cb0;
+  outline: 1px solid #2b6cb0;
+}
+
+.cell img {
+  width: 100%;
+  object-fit: cover;
+  display: block;
+  background: #111;
+}
+
+.cell-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+}
+
+.cell-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #999;
+  font-size: 12px;
+}
+
+.badge {
+  background: #2a2a2a;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 11px;
+  color: #aaa;
+}
+
+.badge-best {
+  background: #3a3413;
+  color: #ffd85e;
+}
+
+.badge-eye {
+  background: #10333d;
+  color: #4dd7f5;
+}
