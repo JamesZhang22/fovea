@@ -58,8 +58,8 @@ def export(weights: Path, out: Path) -> None:
         used = sess.get_providers()[0]
         status = "OK" if max(dx, dy) < TOLERANCE else "DIVERGED"
         print(f"{used}: max diff x={dx:.2e} y={dy:.2e} | {dt:.1f} ms/img | {status}")
-        if status == "DIVERGED":
-            sys.exit(1)
+        if status == "DIVERGED" and used == "CPUExecutionProvider":
+            sys.exit(1)  # CPU is the runtime EP, CoreML results are informational
 
 
 if __name__ == "__main__":

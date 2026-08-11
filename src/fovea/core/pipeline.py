@@ -14,7 +14,7 @@ RATING_BEST = 4
 RATING_TOP = 3
 MIN_PATCH_PX = 256  # focus metrics get unstable below this patch size
 EYE_PATCH_FRACTION = 0.25  # eye patch side as a fraction of the bird box side
-EYE_MIN_CONFIDENCE = 0.2  # below this the eye stage abstains and scoring falls back
+EYE_MIN_CONFIDENCE = 0.5  # from the val error-vs-confidence curve, below this predictions are junk
 
 
 @dataclass
