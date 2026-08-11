@@ -58,7 +58,7 @@ def cmd_cull(args: argparse.Namespace) -> None:
 def add_cull(sub) -> None:
     p = sub.add_parser("cull", help="score and rank a folder, write XMP sidecars for LrC import")
     p.add_argument("folder")
-    p.add_argument("--gap", type=float, default=2.0, help="burst gap in seconds")
+    p.add_argument("--gap", type=float, default=3.0, help="burst gap in seconds")
     p.add_argument(
         "--metric", default="brenner", choices=["brenner", "tenengrad", "edge_sharpness"]
     )

@@ -9,7 +9,7 @@ class OpenFolderRequest(BaseModel):
     path: str
     detect: bool = True
     eye: bool = True
-    gap_seconds: float = 2.0
+    gap_seconds: float = 3.0
     metric: str = "brenner"
 
 

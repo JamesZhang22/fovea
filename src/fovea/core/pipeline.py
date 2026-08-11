@@ -9,6 +9,7 @@ from fovea.core.group.burst import group_bursts
 from fovea.core.ingest import cr3, decode
 from fovea.core.ingest.cache import Cache
 from fovea.core.scan import scan_folder
+from fovea.core.score.blurtype import spectral_anisotropy
 from fovea.core.score.classical import metrics, rank_burst, to_gray
 
 RATING_BEST = 4
@@ -25,7 +26,7 @@ class PipelineConfig:
     detect: bool = False
     eye: bool = False
     export: bool = True
-    gap_seconds: float = 2.0
+    gap_seconds: float = 3.0
     decode_width: int = 3480
     detect_threshold: float = 0.4
     eye_model: str = "models/eye.onnx"
@@ -199,7 +200,7 @@ def _score_entry(entry: dict, config: PipelineConfig, cache: Cache | None) -> di
     path = Path(entry["path"])
     eye = entry.get("eye")
     eye_used = bool(eye and eye["confidence"] >= EYE_MIN_CONFIDENCE and entry.get("birds"))
-    kind = f"score:{config.decode_width}:{'eye' if eye_used else 'std'}"
+    kind = f"score2:{config.decode_width}:{'eye' if eye_used else 'std'}"
     if cache and (cached := cache.get_json(path, kind)) is not None:
         return cached
     previews = cr3.read_previews(path)
@@ -208,7 +209,11 @@ def _score_entry(entry: dict, config: PipelineConfig, cache: Cache | None) -> di
         return None
     im = decode.decode_scaled(cr3.read_range(path, src), config.decode_width)
     patch = im.crop(score_patch_box(entry, im.width, im.height))
-    m = metrics(to_gray(patch))
+    gray = to_gray(patch)
+    m = metrics(gray)
+    aniso, angle = spectral_anisotropy(gray)
+    m["anisotropy"] = round(aniso, 3)
+    m["motion_angle"] = round(angle, 1)
     if cache:
         cache.put_json(path, kind, m)
     return m

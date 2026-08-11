@@ -1,7 +1,7 @@
 from contextlib import suppress
 from datetime import datetime
 
-DEFAULT_GAP_SECONDS = 2.0
+DEFAULT_GAP_SECONDS = 3.0
 
 
 def shot_time(meta: dict) -> float | None:
