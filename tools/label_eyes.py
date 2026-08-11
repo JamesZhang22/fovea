@@ -33,11 +33,8 @@ body { background: #111; color: #ccc; font: 14px system-ui; margin: 0; text-alig
 #bar { padding: 8px; color: #999; }
 #stage { position: relative; display: inline-block; cursor: crosshair; }
 #img { max-width: 96vw; max-height: 84vh; display: block; }
-#loupe { position: absolute; width: 160px; height: 160px; border: 2px solid #fff;
-         border-radius: 50%; pointer-events: none; display: none;
-         background-repeat: no-repeat; box-shadow: 0 0 12px #000; }
-#loupe::after { content: ""; position: absolute; left: 50%; top: 50%; width: 6px; height: 6px;
-                margin: -3px; border: 1px solid #f33; border-radius: 50%; }
+#cursor { position: absolute; width: 22px; height: 22px; margin: -11px; border: 2px solid #f33;
+          border-radius: 50%; pointer-events: none; display: none; }
 #mark { position: absolute; width: 22px; height: 22px; margin: -11px; border: 2px solid #f33;
         border-radius: 50%; pointer-events: none; display: none; }
 #mark::after { content: ""; position: absolute; left: 50%; top: 50%; width: 2px; height: 2px;
@@ -47,13 +44,13 @@ body { background: #111; color: #ccc; font: 14px system-ui; margin: 0; text-alig
 kbd { background: #333; padding: 1px 5px; border-radius: 3px; }
 </style>
 <div id="bar"></div>
-<div id="stage"><img id="img"><div id="loupe"></div><div id="mark"></div><div id="hint"></div></div>
+<div id="stage"><img id="img"><div id="cursor"></div><div id="mark"></div><div id="hint"></div>
+</div>
 <div><kbd>click</kbd> label eye &nbsp; <kbd>enter</kbd> accept suggestion &nbsp; <kbd>s</kbd> skip
 &nbsp; <kbd>&larr;</kbd><kbd>&rarr;</kbd> navigate &nbsp; <kbd>u</kbd> undo last</div>
 <script>
-const ZOOM = 4;
 let cur = null;
-const img = document.getElementById("img"), loupe = document.getElementById("loupe"),
+const img = document.getElementById("img"), cursor = document.getElementById("cursor"),
       mark = document.getElementById("mark"), hint = document.getElementById("hint"),
       bar = document.getElementById("bar");
 
@@ -82,15 +79,11 @@ async function load(i) {
 
 img.addEventListener("mousemove", e => {
   const r = img.getBoundingClientRect();
-  loupe.style.display = "block";
-  loupe.style.left = e.clientX - r.left - 80 + "px";
-  loupe.style.top = e.clientY - r.top - 80 + "px";
-  loupe.style.backgroundImage = `url(${img.src})`;
-  loupe.style.backgroundSize = `${r.width * ZOOM}px auto`;
-  loupe.style.backgroundPosition =
-    `${-((e.clientX - r.left) * ZOOM - 80)}px ${-((e.clientY - r.top) * ZOOM - 80)}px`;
+  cursor.style.display = "block";
+  cursor.style.left = e.clientX - r.left + "px";
+  cursor.style.top = e.clientY - r.top + "px";
 });
-img.addEventListener("mouseleave", () => loupe.style.display = "none");
+img.addEventListener("mouseleave", () => cursor.style.display = "none");
 
 img.addEventListener("click", async e => {
   const r = img.getBoundingClientRect();
