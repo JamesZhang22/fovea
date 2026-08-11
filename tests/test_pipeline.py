@@ -41,3 +41,25 @@ def test_birdbox_scaled() -> None:
 
     b = BirdBox(10.0, 20.0, 110.0, 220.0, 0.9).scaled(2.0)
     assert (b.x0, b.y0, b.x1, b.y1, b.confidence) == (20.0, 40.0, 220.0, 440.0, 0.9)
+
+
+def test_score_patch_box_prefers_confident_eye() -> None:
+    entry = {
+        "meta": {"ImageWidth": 6960},
+        "af": None,
+        "birds": [{"x0": 1000, "y0": 1000, "x1": 3000, "y1": 2600, "confidence": 0.9}],
+        "eye": {"x": 2000.0, "y": 1500.0, "confidence": 0.8},
+    }
+    x0, y0, x1, y1 = score_patch_box(entry, 3480, 2320)
+    assert x0 < 2000 * 0.5 < x1 and y0 < 1500 * 0.5 < y1
+    assert (x1 - x0) >= 250
+
+
+def test_score_patch_box_ignores_low_confidence_eye() -> None:
+    entry = {
+        "meta": {"ImageWidth": 6960},
+        "af": None,
+        "birds": [{"x0": 1000, "y0": 1000, "x1": 3000, "y1": 2600, "confidence": 0.9}],
+        "eye": {"x": 2000.0, "y": 1500.0, "confidence": 0.05},
+    }
+    assert score_patch_box(entry, 1000, 800) == (250, 200, 750, 600)

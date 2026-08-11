@@ -13,6 +13,8 @@ from fovea.core.score.classical import metrics, rank_burst, to_gray
 RATING_BEST = 4
 RATING_TOP = 3
 MIN_PATCH_PX = 256  # focus metrics get unstable below this patch size
+EYE_PATCH_FRACTION = 0.25  # eye patch side as a fraction of the bird box side
+EYE_MIN_CONFIDENCE = 0.2  # below this the eye stage abstains and scoring falls back
 
 
 @dataclass
@@ -20,10 +22,12 @@ class PipelineConfig:
     group: bool = True
     score: bool = True
     detect: bool = False
+    eye: bool = False
     export: bool = True
     gap_seconds: float = 2.0
     decode_width: int = 3480
     detect_threshold: float = 0.4
+    eye_model: str = "models/eye.onnx"
     metric: str = "brenner"
     top_rank: float = 0.8
     workers: int = 10
@@ -41,6 +45,9 @@ def run_pipeline(folder: Path, config: PipelineConfig, cache: Cache | None = Non
 
     if config.detect:
         _detect_stage(entries, config, cache)
+
+    if config.eye:
+        _eye_stage(entries, config, cache)
 
     if config.score:
         with ThreadPoolExecutor(max_workers=config.workers) as pool:
@@ -76,9 +83,17 @@ def rating_for(rank: float | None, burst_size: int, top_rank: float) -> int | No
 
 
 def score_patch_box(entry: dict, width: int, height: int) -> tuple[int, int, int, int]:
-    """Where to measure focus, the in-focus AF region when present, else the center half."""
+    """Where to measure focus: detected eye first, else in-focus AF region, else center half."""
     img_w = entry["meta"].get("ImageWidth") or width
     scale = width / img_w
+    eye = entry.get("eye")
+    if eye and eye["confidence"] >= EYE_MIN_CONFIDENCE and entry.get("birds"):
+        box = max(entry["birds"], key=lambda b: b["confidence"])
+        side = max(box["x1"] - box["x0"], box["y1"] - box["y0"]) * EYE_PATCH_FRACTION * scale
+        half = side / 2
+        x0, y0 = eye["x"] * scale - half, eye["y"] * scale - half
+        x1, y1 = eye["x"] * scale + half, eye["y"] * scale + half
+        return _clamp_padded(x0, y0, x1, y1, width, height)
     af = entry.get("af")
     points = [p for p in (af["display_points"] if af else []) if p["in_focus"]]
     if points:
@@ -88,7 +103,13 @@ def score_patch_box(entry: dict, width: int, height: int) -> tuple[int, int, int
         y1 = max(p["cy"] + p["h"] / 2 for p in points) * scale
     else:
         x0, y0, x1, y1 = width / 4, height / 4, 3 * width / 4, 3 * height / 4
+    return _clamp_padded(x0, y0, x1, y1, width, height)
 
+
+def _clamp_padded(
+    x0: float, y0: float, x1: float, y1: float, width: int, height: int
+) -> tuple[int, int, int, int]:
+    """Pad up to MIN_PATCH_PX and clamp to the image."""
     pad_x = max(0.0, MIN_PATCH_PX - (x1 - x0)) / 2
     pad_y = max(0.0, MIN_PATCH_PX - (y1 - y0)) / 2
     return (
@@ -126,9 +147,37 @@ def _detect_stage(entries: list[dict], config: PipelineConfig, cache: Cache | No
             cache.put_json(path, kind, {"boxes": e["birds"]})
 
 
+def _eye_stage(entries: list[dict], config: PipelineConfig, cache: Cache | None) -> None:
+    """Locate the eye of each entry's most confident bird box."""
+    from fovea.core.detect.eye import EyeLocator
+
+    model_path = Path(config.eye_model)
+    locator = None
+    kind = f"eye:{model_path.stat().st_mtime_ns}"
+    for e in entries:
+        if not e.get("birds"):
+            continue
+        path = Path(e["path"])
+        if cache and (cached := cache.get_json(path, kind)) is not None:
+            e["eye"] = cached["eye"]
+            continue
+        if locator is None:
+            locator = EyeLocator(model_path)
+        previews = cr3.read_previews(path)
+        if previews.full is None:
+            continue
+        jpeg = cr3.read_range(path, previews.full)
+        best_box = max(e["birds"], key=lambda b: b["confidence"])
+        e["eye"] = locator.locate(jpeg, best_box)
+        if cache:
+            cache.put_json(path, kind, {"eye": e["eye"]})
+
+
 def _score_entry(entry: dict, config: PipelineConfig, cache: Cache | None) -> dict | None:
     path = Path(entry["path"])
-    kind = f"score:{config.decode_width}"
+    eye = entry.get("eye")
+    eye_used = bool(eye and eye["confidence"] >= EYE_MIN_CONFIDENCE and entry.get("birds"))
+    kind = f"score:{config.decode_width}:{'eye' if eye_used else 'std'}"
     if cache and (cached := cache.get_json(path, kind)) is not None:
         return cached
     previews = cr3.read_previews(path)
@@ -153,6 +202,8 @@ def _export_entry(entry: dict, config: PipelineConfig) -> bool:
         fovea["FocusMetric"] = round(entry["metrics"][config.metric], 1)
     if entry.get("rank") is not None:
         fovea["BurstRank"] = round(entry["rank"], 3)
+    if entry.get("eye"):
+        fovea["EyeConfidence"] = entry["eye"]["confidence"]
     rating = rating_for(entry.get("rank"), entry.get("burst_size", 1), config.top_rank)
     write_sidecar(path, Sidecar(rating=rating, fovea=fovea))
     return True

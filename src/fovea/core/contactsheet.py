@@ -12,6 +12,7 @@ THUMB_WIDTH_PX = 800
 IN_FOCUS = (255, 40, 40)  # red, AF points the camera reports as in focus
 REPORTED = (255, 220, 0)  # yellow, AF points reported but not in focus
 BIRD = (60, 220, 60)  # green, detected bird bounding boxes
+EYE = (0, 220, 255)  # cyan, detected eye keypoint
 
 PAGE = """<!doctype html>
 <meta charset="utf-8"><title>fovea contact sheet</title>
@@ -45,6 +46,10 @@ def render_file(entry: dict, out_dir: Path) -> str:
     for b in entry.get("birds") or []:
         box = [b["x0"] * scale, b["y0"] * scale, b["x1"] * scale, b["y1"] * scale]
         draw.rectangle(box, outline=BIRD, width=3)
+
+    if eye := entry.get("eye"):
+        x, y, r = eye["x"] * scale, eye["y"] * scale, 8
+        draw.ellipse([x - r, y - r, x + r, y + r], outline=EYE, width=3)
 
     af = entry["af"]
     if af and af["display_points"]:

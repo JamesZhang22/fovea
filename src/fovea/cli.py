@@ -43,6 +43,8 @@ def cmd_cull(args: argparse.Namespace) -> None:
     config = PipelineConfig(
         group=not args.no_group,
         score=not args.no_score,
+        detect=args.detect or args.eye,
+        eye=args.eye,
         export=not args.no_export,
         gap_seconds=args.gap,
         metric=args.metric,
@@ -59,6 +61,10 @@ def add_cull(sub) -> None:
     p.add_argument("--gap", type=float, default=2.0, help="burst gap in seconds")
     p.add_argument(
         "--metric", default="brenner", choices=["brenner", "tenengrad", "edge_sharpness"]
+    )
+    p.add_argument("--detect", action="store_true", help="run bird detection (needs ml deps)")
+    p.add_argument(
+        "--eye", action="store_true", help="locate eyes and score them (implies --detect)"
     )
     p.add_argument("--no-group", action="store_true", help="skip burst grouping")
     p.add_argument("--no-score", action="store_true", help="skip focus scoring")
