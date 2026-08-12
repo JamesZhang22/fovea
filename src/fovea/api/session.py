@@ -5,6 +5,7 @@ from pathlib import Path
 from fovea.api.schemas import OpenFolderRequest
 from fovea.core.ingest.cache import Cache
 from fovea.core.pipeline import PipelineConfig, run_pipeline
+from fovea.core.resources import resource_path
 
 PROGRESS_EVERY = 10  # progress events per stage are throttled to every Nth item
 
@@ -47,9 +48,12 @@ class Session:
         self.status = "running"
         self.error = None
         self.cache = Cache(folder / ".fovea" / "cache.sqlite")
+        eye_model = resource_path("models/eye.onnx")
         config = PipelineConfig(
             detect=request.detect,
-            eye=request.eye and Path("models/eye.onnx").exists(),
+            eye=request.eye and eye_model.exists(),
+            detect_model=str(resource_path("models/bird.onnx")),
+            eye_model=str(eye_model),
             export=False,
             gap_seconds=request.gap_seconds,
             metric=request.metric,

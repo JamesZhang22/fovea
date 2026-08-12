@@ -92,11 +92,22 @@ def add_contactsheet(sub) -> None:
     p.set_defaults(func=cmd_contactsheet)
 
 
+def cmd_app(args: argparse.Namespace) -> None:
+    from fovea.app.main import main as run_app
+
+    run_app()
+
+
+def add_app(sub) -> None:
+    p = sub.add_parser("app", help="launch the desktop app window")
+    p.set_defaults(func=cmd_app)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(prog="fovea", description="Bird photo culling for macOS")
     parser.add_argument("--version", action="version", version=f"fovea {__version__}")
     sub = parser.add_subparsers(dest="command", required=True)
-    for add in (add_scan, add_cull, add_contactsheet):
+    for add in (add_scan, add_cull, add_contactsheet, add_app):
         add(sub)
     args = parser.parse_args()
     args.func(args)
