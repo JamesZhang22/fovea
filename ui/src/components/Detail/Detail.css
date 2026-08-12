@@ -48,3 +48,12 @@
   margin-left: auto;
   color: #666;
 }
+
+.ib-rating {
+  color: #6bff9e;
+}
+
+.ib-reject {
+  color: #ff6b6b;
+  font-weight: 600;
+}

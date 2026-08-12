@@ -24,6 +24,18 @@ export async function openFolder(path: string): Promise<void> {
   if (!r.ok) throw new Error((await r.json()).detail ?? r.statusText);
 }
 
+export async function rate(
+  id: number,
+  patch: { rating?: number; rejected?: boolean },
+): Promise<Entry> {
+  const r = await fetch("/api/rate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id, ...patch }),
+  });
+  return r.json();
+}
+
 export async function fetchEntries(): Promise<Entry[]> {
   const r = await fetch("/api/entries");
   return r.json();

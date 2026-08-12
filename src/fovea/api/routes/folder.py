@@ -9,6 +9,7 @@ from fovea.api.schemas import (
     Entry,
     OpenFolderRequest,
     OpenFolderResponse,
+    RateRequest,
     StatusResponse,
     entry_from_pipeline,
 )
@@ -38,6 +39,16 @@ def folder_router(session: Session) -> APIRouter:
     def entries() -> list[Entry]:
         with session.lock:
             return [entry_from_pipeline(i, e) for i, e in enumerate(session.entries)]
+
+    @router.post("/api/rate", response_model=Entry)
+    def rate(request: RateRequest) -> Entry:
+        if not 0 <= request.id < len(session.entries):
+            raise HTTPException(404, "no such entry")
+        if request.rating is not None and not 0 <= request.rating <= 5:
+            raise HTTPException(422, "rating must be 0-5")
+        session.rate(request.id, request.rating, request.rejected)
+        with session.lock:
+            return entry_from_pipeline(request.id, session.entries[request.id])
 
     @router.get("/api/events")
     async def events() -> StreamingResponse:

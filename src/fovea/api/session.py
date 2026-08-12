@@ -24,6 +24,20 @@ class Session:
     def emit(self, event: dict) -> None:
         self.events.put(event)
 
+    def rate(self, idx: int, rating: int | None, rejected: bool | None) -> dict:
+        """Update one entry's user verdict, persisted in the cache across restarts."""
+        with self.lock:
+            entry = self.entries[idx]
+            user = dict(entry.get("user") or {})
+            if rating is not None:
+                user["rating"] = None if rating == 0 else rating
+            if rejected is not None:
+                user["rejected"] = rejected
+            entry["user"] = user
+        if self.cache:
+            self.cache.put_json(Path(entry["path"]), "user", user)
+        return user
+
     def start(self, request: OpenFolderRequest) -> None:
         threading.Thread(target=self._run, args=(request,), daemon=True).start()
 
@@ -47,6 +61,8 @@ class Session:
 
         try:
             entries = run_pipeline(folder, config, self.cache, progress)
+            for e in entries:
+                e["user"] = self.cache.get_json(Path(e["path"]), "user") or {}
             with self.lock:
                 self.entries = entries
             self.status = "ready"

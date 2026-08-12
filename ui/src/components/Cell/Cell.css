@@ -55,3 +55,17 @@
   background: #10333d;
   color: #4dd7f5;
 }
+
+.cell-rejected img {
+  opacity: 0.35;
+}
+
+.badge-reject {
+  background: #3d1414;
+  color: #ff6b6b;
+}
+
+.badge-rating {
+  background: #143d24;
+  color: #6bff9e;
+}

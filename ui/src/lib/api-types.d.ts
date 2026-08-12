@@ -55,6 +55,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/rate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Rate */
+        post: operations["rate_api_rate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/events": {
         parameters: {
             query?: never;
@@ -182,6 +199,10 @@ export interface components {
             af: components["schemas"]["AFInfo"] | null;
             /** Shot Time */
             shot_time: string | null;
+            /** User Rating */
+            user_rating: number | null;
+            /** Rejected */
+            rejected: boolean;
         };
         /** Eye */
         Eye: {
@@ -213,7 +234,7 @@ export interface components {
             eye: boolean;
             /**
              * Gap Seconds
-             * @default 2
+             * @default 3
              */
             gap_seconds: number;
             /**
@@ -228,6 +249,15 @@ export interface components {
             status: string;
             /** Folder */
             folder: string;
+        };
+        /** RateRequest */
+        RateRequest: {
+            /** Id */
+            id: number;
+            /** Rating */
+            rating?: number | null;
+            /** Rejected */
+            rejected?: boolean | null;
         };
         /** StatusResponse */
         StatusResponse: {
@@ -329,6 +359,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Entry"][];
+                };
+            };
+        };
+    };
+    rate_api_rate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Entry"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

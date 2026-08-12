@@ -54,6 +54,12 @@ class AFInfo(BaseModel):
     display_points: list[AFPoint]
 
 
+class RateRequest(BaseModel):
+    id: int
+    rating: int | None = None  # 0 clears, 1-5 sets
+    rejected: bool | None = None
+
+
 class Entry(BaseModel):
     id: int
     name: str
@@ -69,6 +75,8 @@ class Entry(BaseModel):
     birds: list[BirdBox] | None
     af: AFInfo | None
     shot_time: str | None
+    user_rating: int | None
+    rejected: bool
 
 
 def entry_from_pipeline(idx: int, e: dict) -> Entry:
@@ -90,4 +98,6 @@ def entry_from_pipeline(idx: int, e: dict) -> Entry:
         birds=e.get("birds"),
         af=e.get("af"),
         shot_time=meta.get("DateTimeOriginal"),
+        user_rating=e.get("user", {}).get("rating"),
+        rejected=e.get("user", {}).get("rejected", False),
     )

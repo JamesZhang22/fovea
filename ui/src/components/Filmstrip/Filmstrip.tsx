@@ -46,11 +46,14 @@ export function Filmstrip({ entries, currentId, onSelect }: Props) {
           {group.map((e) => (
             <div
               key={e.id}
-              className={`strip-cell${e.id === currentId ? " strip-current" : ""}`}
+              className={`strip-cell${e.id === currentId ? " strip-current" : ""}${
+                e.rejected ? " strip-rejected" : ""
+              }`}
               onClick={() => onSelect(e.id)}
             >
               <img src={thumbUrl(e.id, 200)} loading="lazy" alt={e.name} />
               {e.rank === 1 && group.length > 1 && <span className="strip-star">★</span>}
+              {e.user_rating != null && <span className="strip-rating">{e.user_rating}</span>}
             </div>
           ))}
         </div>

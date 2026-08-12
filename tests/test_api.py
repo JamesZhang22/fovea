@@ -51,3 +51,26 @@ def test_entries_and_images_on_real_folder() -> None:
     assert thumb.headers["content-type"] == "image/jpeg" and len(thumb.content) > 1000
     full = client.get("/api/image/0/full")
     assert full.content[:2] == b"\xff\xd8" and len(full.content) > 1_000_000
+
+
+def test_rate_persists_across_sessions(tmp_path: Path) -> None:
+    img = tmp_path / "IMG_0001.CR3"
+    img.write_bytes(b"not a real cr3")
+    client = TestClient(create_app())
+    client.post("/api/folder", json={"path": str(tmp_path), "detect": False, "eye": False})
+    wait_ready(client)
+
+    r = client.post("/api/rate", json={"id": 0, "rating": 4, "rejected": False})
+    assert r.status_code == 200
+    assert r.json()["user_rating"] == 4 and r.json()["rejected"] is False
+
+    r = client.post("/api/rate", json={"id": 0, "rating": 0, "rejected": True})
+    assert r.json()["user_rating"] is None and r.json()["rejected"] is True
+
+    fresh = TestClient(create_app())
+    fresh.post("/api/folder", json={"path": str(tmp_path), "detect": False, "eye": False})
+    wait_ready(fresh)
+    e = fresh.get("/api/entries").json()[0]
+    assert e["user_rating"] is None and e["rejected"] is True
+
+    assert fresh.post("/api/rate", json={"id": 99, "rating": 3}).status_code == 404

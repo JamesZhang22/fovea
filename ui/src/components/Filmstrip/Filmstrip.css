@@ -49,3 +49,16 @@
   color: #ffd85e;
   text-shadow: 0 0 4px #000;
 }
+
+.strip-rejected img {
+  opacity: 0.3;
+}
+
+.strip-rating {
+  position: absolute;
+  bottom: 2px;
+  left: 4px;
+  color: #6bff9e;
+  font-size: 11px;
+  text-shadow: 0 0 4px #000;
+}

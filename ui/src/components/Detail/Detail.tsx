@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { fullUrl, type Entry } from "../../lib/api";
+import { fullUrl, rate, type Entry } from "../../lib/api";
 import { Filmstrip } from "../Filmstrip/Filmstrip";
 import { Overlays } from "../Overlays/Overlays";
 import "./Detail.css";
@@ -15,6 +15,7 @@ interface Props {
   entries: Entry[];
   onSelect: (id: number) => void;
   onClose: () => void;
+  onUpdate: (updated: Entry) => void;
 }
 
 const MAX_SCALE = 4;
@@ -26,7 +27,7 @@ interface Transform {
   y: number;
 }
 
-export function Detail({ entry, entries, onSelect, onClose }: Props) {
+export function Detail({ entry, entries, onSelect, onClose, onUpdate }: Props) {
   const viewRef = useRef<HTMLDivElement>(null);
   const [view, setView] = useState({ w: 800, h: 600 });
   const [transform, setTransform] = useState<Transform | null>(null); // null = fit, centered
@@ -111,19 +112,39 @@ export function Detail({ entry, entries, onSelect, onClose }: Props) {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      const i = entries.findIndex((b) => b.id === entry.id);
+      const step = (delta: number) => {
+        const next = entries[i + delta];
+        if (next) onSelect(next.id);
+      };
       if (e.key === "Escape") onClose();
       else if (e.key === "e") setToggles((t) => ({ ...t, eye: !t.eye }));
       else if (e.key === "a") setToggles((t) => ({ ...t, af: !t.af }));
       else if (e.key === "i") setToggles((t) => ({ ...t, info: !t.info }));
-      else if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
-        const i = entries.findIndex((b) => b.id === entry.id);
-        const next = entries[i + (e.key === "ArrowRight" ? 1 : -1)];
-        if (next) onSelect(next.id);
+      else if (e.key === "ArrowLeft" || e.key === "k") step(-1);
+      else if (e.key === "ArrowRight" || e.key === "j") step(1);
+      else if (e.key >= "1" && e.key <= "5") {
+        const n = Number(e.key);
+        rate(entry.id, { rating: n === entry.user_rating ? 0 : n }).then(onUpdate);
+      } else if (e.key === "x") {
+        rate(entry.id, { rejected: !entry.rejected }).then((u) => {
+          onUpdate(u);
+          step(1);
+        });
+      } else if (e.key === "[" || e.key === "]") {
+        const dir = e.key === "]" ? 1 : -1;
+        let n = i + dir;
+        while (n >= 0 && n < entries.length && entries[n].burst === entry.burst) n += dir;
+        if (dir === -1 && n >= 0) {
+          const b = entries[n].burst;
+          while (n > 0 && entries[n - 1].burst === b) n -= 1;
+        }
+        if (n >= 0 && n < entries.length) onSelect(entries[n].id);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [entry.id, entries, onClose, onSelect, clampPos, pos.x, pos.y, scale, view]);
+  }, [entry, entries, onClose, onSelect, onUpdate]);
 
   // preload neighbours so filmstrip flips feel instant
   useEffect(() => {
@@ -218,7 +239,11 @@ function InfoBar({
       {m && <span>focus {m.brenner.toFixed(0)}</span>}
       {blur && <span>{blur}</span>}
       {entry.eye && <span>eye {entry.eye.confidence.toFixed(2)}</span>}
-      <span className="dim">{zoomLabel} · click zoom · pinch/scroll · e/a/i overlays · esc</span>
+      {entry.user_rating != null && <span className="ib-rating">{entry.user_rating}★</span>}
+      {entry.rejected && <span className="ib-reject">REJECTED</span>}
+      <span className="dim">
+        {zoomLabel} · j/k nav · 1-5 rate · x reject · [ ] burst · e/a/i overlays · esc
+      </span>
     </div>
   );
 }
