@@ -34,13 +34,28 @@ TAGS = [
 
 SENTINEL = b"{ready}"  # exiftool prints this after each -execute completes
 
+# Finder-launched apps get a minimal PATH, so check Homebrew locations explicitly
+EXIFTOOL_FALLBACKS = ("/opt/homebrew/bin/exiftool", "/usr/local/bin/exiftool")
+
+
+def find_exiftool() -> str:
+    import shutil
+
+    found = shutil.which("exiftool")
+    if found:
+        return found
+    for candidate in EXIFTOOL_FALLBACKS:
+        if Path(candidate).is_file():
+            return candidate
+    raise RuntimeError("exiftool not found, install it with: brew install exiftool")
+
 
 class ExifTool:
     """Resident `exiftool -stay_open` process."""
 
     def __init__(self) -> None:
         self.proc = subprocess.Popen(
-            ["exiftool", "-stay_open", "True", "-@", "-"],
+            [find_exiftool(), "-stay_open", "True", "-@", "-"],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
