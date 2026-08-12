@@ -4,7 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 
-from fovea.core.export.xmp import Sidecar, sidecar_path, write_sidecar
+from fovea.core.export.xmp import Sidecar, is_fovea_sidecar, sidecar_path, write_sidecar
 from fovea.core.group.burst import group_bursts
 from fovea.core.ingest import cr3, decode
 from fovea.core.ingest.cache import Cache
@@ -224,6 +224,12 @@ def _export_entry(entry: dict, config: PipelineConfig) -> bool:
     path = Path(entry["path"])
     if sidecar_path(path).exists():
         return False
+    rating = rating_for(entry.get("rank"), entry.get("burst_size", 1), config.top_rank)
+    write_sidecar(path, Sidecar(rating=rating, fovea=_fovea_fields(entry, config)))
+    return True
+
+
+def _fovea_fields(entry: dict, config: PipelineConfig) -> dict[str, object]:
     fovea: dict[str, object] = {"BurstId": entry.get("burst")}
     if entry.get("metrics"):
         fovea["FocusMetric"] = round(entry["metrics"][config.metric], 1)
@@ -231,6 +237,28 @@ def _export_entry(entry: dict, config: PipelineConfig) -> bool:
         fovea["BurstRank"] = round(entry["rank"], 3)
     if entry.get("eye"):
         fovea["EyeConfidence"] = entry["eye"]["confidence"]
-    rating = rating_for(entry.get("rank"), entry.get("burst_size", 1), config.top_rank)
-    write_sidecar(path, Sidecar(rating=rating, fovea=fovea))
-    return True
+    return fovea
+
+
+def export_verdicts(entries: list[dict], config: PipelineConfig) -> tuple[int, int]:
+    """Write sidecars carrying the user's verdicts, falling back to suggested ratings."""
+    written = skipped = 0
+    for entry in entries:
+        path = Path(entry["path"])
+        target = sidecar_path(path)
+        if target.exists() and not is_fovea_sidecar(target):
+            skipped += 1
+            continue
+        user = entry.get("user") or {}
+        rejected = bool(user.get("rejected"))
+        if user.get("rating") is not None:
+            rating = user["rating"]
+        elif rejected:
+            rating = None
+        else:
+            rating = rating_for(entry.get("rank"), entry.get("burst_size", 1), config.top_rank)
+        write_sidecar(
+            path, Sidecar(rating=rating, rejected=rejected, fovea=_fovea_fields(entry, config))
+        )
+        written += 1
+    return written, skipped

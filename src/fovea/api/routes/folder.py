@@ -7,6 +7,7 @@ from fastapi.responses import StreamingResponse
 
 from fovea.api.schemas import (
     Entry,
+    ExportResponse,
     OpenFolderRequest,
     OpenFolderResponse,
     RateRequest,
@@ -14,6 +15,7 @@ from fovea.api.schemas import (
     entry_from_pipeline,
 )
 from fovea.api.session import Session
+from fovea.core.pipeline import PipelineConfig, export_verdicts
 
 
 def folder_router(session: Session) -> APIRouter:
@@ -49,6 +51,15 @@ def folder_router(session: Session) -> APIRouter:
         session.rate(request.id, request.rating, request.rejected)
         with session.lock:
             return entry_from_pipeline(request.id, session.entries[request.id])
+
+    @router.post("/api/export", response_model=ExportResponse)
+    def export() -> ExportResponse:
+        if session.status != "ready":
+            raise HTTPException(409, "no folder loaded")
+        with session.lock:
+            entries = list(session.entries)
+        written, skipped = export_verdicts(entries, PipelineConfig())
+        return ExportResponse(written=written, skipped_foreign=skipped)
 
     @router.get("/api/events")
     async def events() -> StreamingResponse:

@@ -74,3 +74,26 @@ def test_rate_persists_across_sessions(tmp_path: Path) -> None:
     assert e["user_rating"] is None and e["rejected"] is True
 
     assert fresh.post("/api/rate", json={"id": 99, "rating": 3}).status_code == 404
+
+
+def test_export_writes_verdicts(tmp_path: Path) -> None:
+    for name in ("IMG_0001.CR3", "IMG_0002.CR3", "IMG_0003.CR3"):
+        (tmp_path / name).write_bytes(b"fake")
+    foreign = tmp_path / "IMG_0003.xmp"
+    foreign.write_text("<x:xmpmeta>adobe edits</x:xmpmeta>")
+
+    client = TestClient(create_app())
+    client.post("/api/folder", json={"path": str(tmp_path), "detect": False, "eye": False})
+    wait_ready(client)
+    client.post("/api/rate", json={"id": 0, "rating": 5})
+    client.post("/api/rate", json={"id": 1, "rejected": True})
+
+    r = client.post("/api/export").json()
+    assert r == {"written": 2, "skipped_foreign": 1}
+    assert 'xmp:Rating="5"' in (tmp_path / "IMG_0001.xmp").read_text()
+    assert 'xmpDM:good="False"' in (tmp_path / "IMG_0002.xmp").read_text()
+    assert foreign.read_text() == "<x:xmpmeta>adobe edits</x:xmpmeta>"
+
+    client.post("/api/rate", json={"id": 0, "rating": 2})
+    assert client.post("/api/export").json() == {"written": 2, "skipped_foreign": 1}
+    assert 'xmp:Rating="2"' in (tmp_path / "IMG_0001.xmp").read_text()

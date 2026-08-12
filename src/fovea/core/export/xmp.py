@@ -12,6 +12,7 @@ TEMPLATE = """<?xpacket begin="﻿" id="W5M0MpCehiHzreSzNTczkc9d"?>
     xmlns:xmp="http://ns.adobe.com/xap/1.0/"
     xmlns:dc="http://purl.org/dc/elements/1.1/"
     xmlns:lr="http://ns.adobe.com/lightroom/1.0/"
+    xmlns:xmpDM="http://ns.adobe.com/xmp/1.0/DynamicMedia/"
     xmlns:fovea="{fovea_ns}"{attrs}>
 {bags}  </rdf:Description>
  </rdf:RDF>
@@ -23,6 +24,7 @@ TEMPLATE = """<?xpacket begin="﻿" id="W5M0MpCehiHzreSzNTczkc9d"?>
 @dataclass
 class Sidecar:
     rating: int | None = None
+    rejected: bool = False  # LrC round-trips its reject flag as xmpDM:good="False"
     label: str | None = None
     keywords: list[str] = field(default_factory=list)
     fovea: dict[str, object] = field(default_factory=dict)
@@ -39,10 +41,25 @@ def sidecar_path(image_path: Path) -> Path:
     return image_path.with_suffix(".xmp")
 
 
+def is_fovea_sidecar(path: Path) -> bool:
+    """True when we wrote this sidecar and no other tool has taken it over.
+
+    LrC preserves our namespace when it saves metadata, so an Adobe-written file can
+    still contain fovea fields, those are foreign now and never overwritten.
+    """
+    try:
+        text = path.read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        return False
+    return FOVEA_NS in text and "Adobe XMP Core" not in text
+
+
 def render(s: Sidecar) -> str:
     """Serialize to XMP, keywords go to both flat dc:subject and lr:hierarchicalSubject."""
     attrs = []
-    if s.rating is not None:
+    if s.rejected:
+        attrs.append('xmpDM:good="False"')
+    elif s.rating is not None:
         attrs.append(f'xmp:Rating="{s.rating}"')
     if s.label is not None:
         attrs.append(f'xmp:Label="{s.label}"')

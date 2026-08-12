@@ -54,6 +54,11 @@ class AFInfo(BaseModel):
     display_points: list[AFPoint]
 
 
+class ExportResponse(BaseModel):
+    written: int
+    skipped_foreign: int
+
+
 class RateRequest(BaseModel):
     id: int
     rating: int | None = None  # 0 clears, 1-5 sets

@@ -66,3 +66,24 @@ def test_write_sidecar(tmp_path: Path) -> None:
     out = write_sidecar(img, Sidecar(rating=3))
     assert out == tmp_path / "IMG_0001.xmp"
     assert 'xmp:Rating="3"' in out.read_text()
+
+
+def test_rejected_renders_xmpdm_good() -> None:
+    text = render(Sidecar(rejected=True))
+    assert 'xmpDM:good="False"' in text and "xmp:Rating" not in text
+    parse_description(text)
+
+
+def test_adobe_saved_sidecar_is_foreign(tmp_path: Path) -> None:
+    from fovea.core.export.xmp import FOVEA_NS, is_fovea_sidecar
+
+    ours = tmp_path / "a.xmp"
+    ours.write_text(render(Sidecar(rating=3)))
+    assert is_fovea_sidecar(ours)
+
+    adobe = tmp_path / "b.xmp"
+    adobe.write_text(
+        f'<x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="Adobe XMP Core 7.0-c000">'
+        f'<rdf:Description xmlns:fovea="{FOVEA_NS}" fovea:BurstId="1"/></x:xmpmeta>'
+    )
+    assert not is_fovea_sidecar(adobe)
