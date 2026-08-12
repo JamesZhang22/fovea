@@ -15,13 +15,26 @@ export interface ProgressEvent {
   message?: string;
 }
 
-export async function openFolder(path: string): Promise<void> {
+export interface OpenOptions {
+  detect?: boolean;
+  eye?: boolean;
+  gap_seconds?: number;
+  metric?: string;
+}
+
+export async function openFolder(path: string, options: OpenOptions = {}): Promise<void> {
   const r = await fetch("/api/folder", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ path }),
+    body: JSON.stringify({ path, ...options }),
   });
   if (!r.ok) throw new Error((await r.json()).detail ?? r.statusText);
+}
+
+export async function exportSidecars(): Promise<{ written: number; skipped_foreign: number }> {
+  const r = await fetch("/api/export", { method: "POST" });
+  if (!r.ok) throw new Error((await r.json()).detail ?? r.statusText);
+  return r.json();
 }
 
 export async function rate(

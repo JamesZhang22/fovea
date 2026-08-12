@@ -1,0 +1,138 @@
+.settings {
+  position: relative;
+}
+
+.settings-toggle {
+  background: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 5px;
+  color: #bbb;
+  padding: 4px 10px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.settings-toggle-open,
+.settings-toggle:hover {
+  border-color: #555;
+  color: #eee;
+}
+
+.settings-panel {
+  position: absolute;
+  top: 36px;
+  right: 0;
+  z-index: 10;
+  width: 264px;
+  padding: 14px 16px;
+  background: #1b1b1d;
+  border: 1px solid #333;
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+}
+
+.settings-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #777;
+  margin-bottom: 10px;
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 34px;
+  gap: 12px;
+}
+
+.settings-row > span:first-child {
+  color: #ccc;
+}
+
+.settings-row-disabled > span:first-child {
+  color: #666;
+}
+
+.settings-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.settings-unit {
+  color: #777;
+}
+
+.settings-panel input[type="number"] {
+  width: 58px;
+  background: #141414;
+  border: 1px solid #333;
+  border-radius: 5px;
+  color: #ddd;
+  padding: 4px 7px;
+  font: inherit;
+  text-align: right;
+}
+
+.settings-panel select {
+  background: #141414;
+  border: 1px solid #333;
+  border-radius: 5px;
+  color: #ddd;
+  padding: 4px 7px;
+  font: inherit;
+}
+
+.settings-panel input:focus,
+.settings-panel select:focus {
+  outline: none;
+  border-color: #2b6cb0;
+}
+
+.settings-note {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #2a2a2a;
+  color: #666;
+  font-size: 12px;
+}
+
+.switch {
+  position: relative;
+  width: 36px;
+  height: 21px;
+  border: none;
+  border-radius: 11px;
+  background: #3a3a3a;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s;
+  flex: 0 0 auto;
+}
+
+.switch-on {
+  background: #2b6cb0;
+}
+
+.switch:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.switch-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: #ddd;
+  transition: transform 0.15s;
+}
+
+.switch-on .switch-knob {
+  transform: translateX(15px);
+}

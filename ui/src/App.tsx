@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  exportSidecars,
   fetchEntries,
   openFolder,
   subscribeEvents,
   type Entry,
   type ProgressEvent,
 } from "./lib/api";
+import { DEFAULT_SETTINGS, loadSettings, Settings } from "./components/Settings/Settings";
+import type { PipelineSettings } from "./components/Settings/Settings";
 import { Detail } from "./components/Detail/Detail";
 import { Grid } from "./components/Grid/Grid";
 import "./App.css";
@@ -19,13 +22,30 @@ export default function App() {
   const [running, setRunning] = useState(false);
   const current = selected !== null ? (entries.find((e) => e.id === selected) ?? null) : null;
   const gridScroll = useRef(0);
+  const [settings, setSettings] = useState<PipelineSettings>(DEFAULT_SETTINGS);
+  const [exportMsg, setExportMsg] = useState<{ text: string; ok: boolean } | null>(null);
+
+  useEffect(() => setSettings(loadSettings()), []);
+
+  const doExport = useCallback(async () => {
+    try {
+      const r = await exportSidecars();
+      setExportMsg({
+        text: `✓ ${r.written} sidecars written${r.skipped_foreign ? `, ${r.skipped_foreign} foreign skipped` : ""}`,
+        ok: true,
+      });
+      setTimeout(() => setExportMsg(null), 5000);
+    } catch (e) {
+      setExportMsg({ text: String(e), ok: false });
+    }
+  }, []);
 
   const open = useCallback(async () => {
     setError(null);
     setRunning(true);
     setEntries([]);
     try {
-      await openFolder(path);
+      await openFolder(path, settings);
       const stop = subscribeEvents(async (e) => {
         setProgress(e);
         if (e.type === "done") {
@@ -42,7 +62,7 @@ export default function App() {
       setError(String(e));
       setRunning(false);
     }
-  }, [path]);
+  }, [path, settings]);
 
   useEffect(() => {
     fetchEntries().then((existing) => {
@@ -73,6 +93,14 @@ export default function App() {
           <span className="progress">{entries.length} frames</span>
         )}
         {error && <span className="error">{error}</span>}
+        {exportMsg && (
+          <span className={exportMsg.ok ? "export-ok" : "error"}>{exportMsg.text}</span>
+        )}
+        <span className="spacer" />
+        <button onClick={doExport} disabled={running || entries.length === 0}>
+          export
+        </button>
+        <Settings settings={settings} onChange={setSettings} />
       </header>
       {current ? (
         <Detail
