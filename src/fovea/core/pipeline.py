@@ -29,6 +29,7 @@ class PipelineConfig:
     gap_seconds: float = 3.0
     decode_width: int = 3480
     detect_threshold: float = 0.4
+    detect_model: str = "models/bird.onnx"
     eye_model: str = "models/eye.onnx"
     metric: str = "brenner"
     top_rank: float = 0.8
@@ -143,7 +144,7 @@ def _detect_stage(
     """Annotate entries with bird boxes in full-resolution pixel coordinates."""
     from dataclasses import asdict
 
-    from fovea.core.detect.bird import DETECT_WIDTH_PX, BirdDetector
+    from fovea.core.detect.bird import DETECT_WIDTH_PX, BirdDetector, OnnxBirdDetector
 
     detector = None
     kind = f"birds:{config.detect_threshold}"
@@ -154,7 +155,11 @@ def _detect_stage(
             e["birds"] = cached["boxes"]
             continue
         if detector is None:
-            detector = BirdDetector(config.detect_threshold)
+            onnx_model = Path(config.detect_model)
+            if onnx_model.exists():
+                detector = OnnxBirdDetector(onnx_model, config.detect_threshold)
+            else:
+                detector = BirdDetector(config.detect_threshold)
         previews = cr3.read_previews(path)
         src = previews.full or previews.prvw
         if src is None:

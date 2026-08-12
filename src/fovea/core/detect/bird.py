@@ -44,3 +44,63 @@ class BirdDetector:
             for b, cls, c in zip(det.xyxy, det.class_id, det.confidence, strict=True)
             if cls == BIRD_COCO_ID
         ]
+
+
+class OnnxBirdDetector:
+    """Same detections through onnxruntime, what the packaged app ships instead of torch."""
+
+    IMAGENET_MEAN = (0.485, 0.456, 0.406)
+    IMAGENET_STD = (0.229, 0.224, 0.225)
+
+    def __init__(self, model_path, threshold: float = DEFAULT_THRESHOLD) -> None:
+        import numpy as np
+        import onnxruntime as ort
+
+        self.np = np
+        self.session = ort.InferenceSession(str(model_path), providers=["CPUExecutionProvider"])
+        self.input_name = self.session.get_inputs()[0].name
+        self.input_px = self.session.get_inputs()[0].shape[2]
+        self.threshold = threshold
+
+    def _resize_no_antialias(self, im: Image.Image):
+        """Plain bilinear sampling matching torch resize(antialias=False) at export time."""
+        np = self.np
+        src = np.asarray(im, dtype=np.float32)
+        h, w = src.shape[:2]
+        n = self.input_px
+        # torchvision maps output centers to input coords as (i + 0.5) * scale - 0.5
+        ys = np.clip((np.arange(n) + 0.5) * (h / n) - 0.5, 0, h - 1)
+        xs = np.clip((np.arange(n) + 0.5) * (w / n) - 0.5, 0, w - 1)
+        y0, x0 = np.floor(ys).astype(int), np.floor(xs).astype(int)
+        y1, x1 = np.minimum(y0 + 1, h - 1), np.minimum(x0 + 1, w - 1)
+        wy, wx = (ys - y0)[:, None, None], (xs - x0)[None, :, None]
+        return (
+            src[y0][:, x0] * (1 - wy) * (1 - wx)
+            + src[y0][:, x1] * (1 - wy) * wx
+            + src[y1][:, x0] * wy * (1 - wx)
+            + src[y1][:, x1] * wy * wx
+        )
+
+    def detect(self, im: Image.Image) -> list[BirdBox]:
+        np = self.np
+        arr = self._resize_no_antialias(im) / 255.0
+        arr = (arr - self.IMAGENET_MEAN) / self.IMAGENET_STD
+        arr = arr.transpose(2, 0, 1)[None].astype(np.float32)
+
+        dets, labels = self.session.run(None, {self.input_name: arr})
+        scores = 1.0 / (1.0 + np.exp(-labels[0]))  # sigmoid over class logits
+        bird_scores = scores[:, BIRD_COCO_ID]
+        keep = bird_scores > self.threshold
+
+        boxes = []
+        for (cx, cy, w, h), score in zip(dets[0][keep], bird_scores[keep], strict=True):
+            boxes.append(
+                BirdBox(
+                    float((cx - w / 2) * im.width),
+                    float((cy - h / 2) * im.height),
+                    float((cx + w / 2) * im.width),
+                    float((cy + h / 2) * im.height),
+                    float(score),
+                )
+            )
+        return sorted(boxes, key=lambda b: -b.confidence)
