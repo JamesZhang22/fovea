@@ -1,29 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { saveSettings, type PipelineSettings } from "../../lib/settings";
 import "./Settings.css";
-
-export interface PipelineSettings {
-  detect: boolean;
-  eye: boolean;
-  gap_seconds: number;
-  metric: "brenner" | "tenengrad" | "edge_sharpness";
-}
-
-export const DEFAULT_SETTINGS: PipelineSettings = {
-  detect: true,
-  eye: true,
-  gap_seconds: 3.0,
-  metric: "brenner",
-};
-
-const STORAGE_KEY = "fovea-settings";
-
-export function loadSettings(): PipelineSettings {
-  try {
-    return { ...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "{}") };
-  } catch {
-    return DEFAULT_SETTINGS;
-  }
-}
 
 interface Props {
   settings: PipelineSettings;
@@ -34,9 +11,7 @@ export function Settings({ settings, onChange }: Props) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-  }, [settings]);
+  useEffect(() => saveSettings(settings), [settings]);
 
   useEffect(() => {
     if (!open) return;

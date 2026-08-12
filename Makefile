@@ -1,4 +1,4 @@
-.PHONY: dev api test lint check gen-api build-ui
+.PHONY: dev api test lint check gen-api build-ui app
 
 dev:  ## api + ui dev servers together, Ctrl+C stops both
 	@trap 'kill 0' INT TERM EXIT; \
@@ -14,6 +14,7 @@ test:
 
 lint:
 	uv run ruff check . && uv run ruff format --check .
+	cd ui && pnpm exec tsc -b && pnpm lint
 
 check: lint test
 
@@ -24,3 +25,7 @@ gen-api:  ## regenerate ui/src/lib/api-types.d.ts from the FastAPI schema
 
 build-ui:
 	cd ui && pnpm build
+
+app: build-ui  ## fresh ui build + frozen dist/fovea.app
+	uv run pyinstaller packaging/fovea.spec --noconfirm --distpath dist --workpath build
+	@echo "done: open dist/fovea.app"

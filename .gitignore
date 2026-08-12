@@ -1,5 +1,7 @@
-# Local planning docs
+# Local planning docs and assistant config
 context/
+CLAUDE.md
+.claude/
 
 # Datasets and model weights, never committed
 data/

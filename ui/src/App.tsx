@@ -7,8 +7,8 @@ import {
   type Entry,
   type ProgressEvent,
 } from "./lib/api";
-import { DEFAULT_SETTINGS, loadSettings, Settings } from "./components/Settings/Settings";
-import type { PipelineSettings } from "./components/Settings/Settings";
+import { Settings } from "./components/Settings/Settings";
+import { DEFAULT_SETTINGS, loadSettings, type PipelineSettings } from "./lib/settings";
 import { Detail } from "./components/Detail/Detail";
 import { Grid } from "./components/Grid/Grid";
 import "./App.css";
