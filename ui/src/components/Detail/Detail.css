@@ -57,3 +57,12 @@
   color: #ff6b6b;
   font-weight: 600;
 }
+
+.ib-score {
+  color: #4dd7f5;
+  font-weight: 600;
+}
+
+.ib-abstain {
+  color: #777;
+}

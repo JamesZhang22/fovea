@@ -226,7 +226,7 @@ function InfoBar({
 }) {
   const m = entry.metrics;
   const blur =
-    m && m.anisotropy !== undefined
+    m && m.anisotropy != null
       ? m.anisotropy > 0.3
         ? `motion ${m.motion_angle}°`
         : "defocus-dominant"
@@ -236,7 +236,14 @@ function InfoBar({
     <div className="infobar">
       <span>{entry.name}</span>
       {entry.rank !== null && <span>rank {(entry.rank * 100).toFixed(0)}%</span>}
-      {m && <span>focus {m.brenner.toFixed(0)}</span>}
+      {m && m.focus_score != null && (
+        <span className="ib-score">score {m.focus_score.toFixed(0)}</span>
+      )}
+      {m && m.focus_score == null && m.focus_confidence != null && (
+        <span className="ib-abstain">score —</span>
+      )}
+      {m && m.focus_radius_px != null && <span>blur {m.focus_radius_px.toFixed(1)}px</span>}
+      {m && <span>focus {m.brenner?.toFixed(0)}</span>}
       {blur && <span>{blur}</span>}
       {entry.eye && <span>eye {entry.eye.confidence.toFixed(2)}</span>}
       {entry.user_rating != null && <span className="ib-rating">{entry.user_rating}★</span>}

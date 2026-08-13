@@ -13,8 +13,8 @@ from pathlib import Path
 
 import numpy as np
 
-# ordinal blur levels, radius in native pixels (level 0 = the sharp anchor)
-DEFOCUS_RADII_PX = [0.0, 0.5, 1.0, 1.5, 2.25, 3.25, 4.5, 6.5, 9.0, 12.0]
+from fovea.core.score.model import DEFOCUS_RADII_PX  # canonical ordinal levels
+
 MOTION_LENGTHS_PX = [3.0, 6.0, 10.0, 16.0]  # equivalent severity label = length / 2
 SUPERSAMPLE = 8
 NOISE_STD_DN = 1.5  # sensor-ish noise applied after blur

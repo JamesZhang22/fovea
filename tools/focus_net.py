@@ -7,8 +7,9 @@ gives a continuous blur radius, distribution entropy gives confidence for free.
 import numpy as np
 import torch
 import torch.nn.functional as F
-from focus_degrade import DEFOCUS_RADII_PX
 from torch import nn
+
+from fovea.core.score.model import DEFOCUS_RADII_PX
 
 PATCH_PX = 96
 N_LEVELS = len(DEFOCUS_RADII_PX)

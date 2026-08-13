@@ -74,7 +74,7 @@ class Entry(BaseModel):
     burst: int | None
     burst_size: int
     rank: float | None
-    metrics: dict[str, float] | None
+    metrics: dict[str, float | None] | None
     eye: Eye | None
     eye_used: bool
     birds: list[BirdBox] | None

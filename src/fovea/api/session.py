@@ -54,6 +54,7 @@ class Session:
             eye=request.eye and eye_model.exists(),
             detect_model=str(resource_path("models/bird.onnx")),
             eye_model=str(eye_model),
+            focus_model=str(resource_path("models/focus.onnx")),
             export=False,
             gap_seconds=request.gap_seconds,
             metric=request.metric,

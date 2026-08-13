@@ -13,6 +13,8 @@ a = Analysis(
         (str(ROOT / "models" / "eye.onnx"), "models"),
         (str(ROOT / "models" / "eye.onnx.data"), "models"),
         (str(ROOT / "models" / "bird.onnx"), "models"),
+        (str(ROOT / "models" / "focus.onnx"), "models"),
+        (str(ROOT / "models" / "focus.onnx.data"), "models"),
     ],
     hiddenimports=[
         "uvicorn.logging",

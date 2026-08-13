@@ -206,7 +206,7 @@ export interface components {
             rank: number | null;
             /** Metrics */
             metrics: {
-                [key: string]: number;
+                [key: string]: number | null;
             } | null;
             eye: components["schemas"]["Eye"] | null;
             /** Eye Used */

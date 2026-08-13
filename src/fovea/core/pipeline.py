@@ -17,6 +17,7 @@ RATING_TOP = 3
 MIN_PATCH_PX = 256  # focus metrics get unstable below this patch size
 EYE_PATCH_FRACTION = 0.25  # eye patch side as a fraction of the bird box side
 EYE_MIN_CONFIDENCE = 0.5  # from the val error-vs-confidence curve, below this predictions are junk
+MIN_EYE_BOX_PX = 400  # bird box below this means the eye is too small to score honestly
 
 
 @dataclass
@@ -31,6 +32,7 @@ class PipelineConfig:
     detect_threshold: float = 0.4
     detect_model: str = "models/bird.onnx"
     eye_model: str = "models/eye.onnx"
+    focus_model: str = "models/focus.onnx"
     metric: str = "brenner"
     top_rank: float = 0.8
     workers: int = 10
@@ -64,9 +66,17 @@ def run_pipeline(
         _eye_stage(entries, config, cache, tick)
 
     if config.score:
+        scorer = None
+        focus_path = Path(config.focus_model)
+        if focus_path.exists():
+            from fovea.core.score.model import FocusScorer
+
+            scorer = FocusScorer(focus_path)
         scored = []
         with ThreadPoolExecutor(max_workers=config.workers) as pool:
-            for i, m in enumerate(pool.map(lambda e: _score_entry(e, config, cache), entries)):
+            for i, m in enumerate(
+                pool.map(lambda e: _score_entry(e, config, cache, scorer), entries)
+            ):
                 scored.append(m)
                 tick("score", i + 1, len(entries))
         for e, m in zip(entries, scored, strict=True):
@@ -201,27 +211,61 @@ def _eye_stage(
             cache.put_json(path, kind, {"eye": e["eye"]})
 
 
-def _score_entry(entry: dict, config: PipelineConfig, cache: Cache | None) -> dict | None:
+def _score_entry(
+    entry: dict, config: PipelineConfig, cache: Cache | None, scorer=None
+) -> dict | None:
     path = Path(entry["path"])
     eye = entry.get("eye")
     eye_used = bool(eye and eye["confidence"] >= EYE_MIN_CONFIDENCE and entry.get("birds"))
-    kind = f"score2:{config.decode_width}:{'eye' if eye_used else 'std'}"
+    kind = f"score3:{config.decode_width}:{'eye' if eye_used else 'std'}"
     if cache and (cached := cache.get_json(path, kind)) is not None:
         return cached
     previews = cr3.read_previews(path)
     src = previews.full or previews.prvw
     if src is None:
         return None
-    im = decode.decode_scaled(cr3.read_range(path, src), config.decode_width)
+    jpeg = cr3.read_range(path, src)
+    im = decode.decode_scaled(jpeg, config.decode_width)
     patch = im.crop(score_patch_box(entry, im.width, im.height))
     gray = to_gray(patch)
     m = metrics(gray)
     aniso, angle = spectral_anisotropy(gray)
     m["anisotropy"] = round(aniso, 3)
     m["motion_angle"] = round(angle, 1)
+    if scorer is not None and eye_used:
+        m.update(_focus_score(entry, jpeg, scorer))
     if cache:
         cache.put_json(path, kind, m)
     return m
+
+
+def _focus_score(entry: dict, jpeg: bytes, scorer) -> dict:
+    """Ordinal model on the native-res eye patch, abstains on tiny eyes."""
+    import numpy as np
+
+    from fovea.core.score.model import PATCH_PX
+
+    box = max(entry["birds"], key=lambda b: b["confidence"])
+    box_px = max(box["x1"] - box["x0"], box["y1"] - box["y0"])
+    if box_px < MIN_EYE_BOX_PX:
+        return {"focus_score": None, "focus_confidence": 0.0}
+    eye = entry["eye"]
+    half = PATCH_PX // 2
+    region = (
+        int(eye["x"] - half),
+        int(eye["y"] - half),
+        int(eye["x"] + half),
+        int(eye["y"] + half),
+    )
+    patch = decode.roi_native(jpeg, region).convert("L")
+    if patch.size != (PATCH_PX, PATCH_PX):
+        return {"focus_score": None, "focus_confidence": 0.0}
+    result = scorer.score(np.asarray(patch, dtype=np.float32))
+    return {
+        "focus_radius_px": result["radius_px"],
+        "focus_score": result["score"],
+        "focus_confidence": result["confidence"],
+    }
 
 
 def _export_entry(entry: dict, config: PipelineConfig) -> bool:
@@ -238,6 +282,9 @@ def _fovea_fields(entry: dict, config: PipelineConfig) -> dict[str, object]:
     fovea: dict[str, object] = {"BurstId": entry.get("burst")}
     if entry.get("metrics"):
         fovea["FocusMetric"] = round(entry["metrics"][config.metric], 1)
+        if entry["metrics"].get("focus_score") is not None:
+            fovea["FocusScore"] = entry["metrics"]["focus_score"]
+            fovea["BlurRadiusPx"] = entry["metrics"]["focus_radius_px"]
     if entry.get("rank") is not None:
         fovea["BurstRank"] = round(entry["rank"], 3)
     if entry.get("eye"):
