@@ -6,6 +6,7 @@ from fovea.api.schemas import OpenFolderRequest
 from fovea.core.ingest.cache import Cache
 from fovea.core.pipeline import PipelineConfig, run_pipeline
 from fovea.core.resources import resource_path
+from fovea.core.score.calibrate import default_calibration_path
 
 PROGRESS_EVERY = 10  # progress events per stage are throttled to every Nth item
 
@@ -55,6 +56,7 @@ class Session:
             detect_model=str(resource_path("models/bird.onnx")),
             eye_model=str(eye_model),
             focus_model=str(resource_path("models/focus.onnx")),
+            calibration_path=str(default_calibration_path()),
             export=False,
             gap_seconds=request.gap_seconds,
             metric=request.metric,

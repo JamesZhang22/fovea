@@ -40,6 +40,8 @@ def cmd_cull(args: argparse.Namespace) -> None:
     from fovea.core.pipeline import PipelineConfig, run_pipeline
 
     folder, cache = _folder_and_cache(args)
+    from fovea.core.score.calibrate import default_calibration_path
+
     config = PipelineConfig(
         group=not args.no_group,
         score=not args.no_score,
@@ -48,6 +50,7 @@ def cmd_cull(args: argparse.Namespace) -> None:
         export=not args.no_export,
         gap_seconds=args.gap,
         metric=args.metric,
+        calibration_path=str(default_calibration_path()),
     )
     entries = run_pipeline(folder, config, cache)
     rated = sum(1 for e in entries if e.get("rank") == 1.0 and e.get("burst_size", 1) > 1)

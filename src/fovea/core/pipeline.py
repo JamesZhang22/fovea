@@ -33,6 +33,7 @@ class PipelineConfig:
     detect_model: str = "models/bird.onnx"
     eye_model: str = "models/eye.onnx"
     focus_model: str = "models/focus.onnx"
+    calibration_path: str | None = None  # None keeps percentiles seed-only, no persistence
     metric: str = "brenner"
     top_rank: float = 0.8
     workers: int = 10
@@ -66,21 +67,29 @@ def run_pipeline(
         _eye_stage(entries, config, cache, tick)
 
     if config.score:
+        from fovea.core.score.calibrate import Calibration
+
         scorer = None
         focus_path = Path(config.focus_model)
         if focus_path.exists():
             from fovea.core.score.model import FocusScorer
 
             scorer = FocusScorer(focus_path)
+        calibration = Calibration(
+            Path(config.calibration_path) if config.calibration_path else None
+        )
         scored = []
         with ThreadPoolExecutor(max_workers=config.workers) as pool:
             for i, m in enumerate(
-                pool.map(lambda e: _score_entry(e, config, cache, scorer), entries)
+                pool.map(lambda e: _score_entry(e, config, cache, scorer, calibration), entries)
             ):
                 scored.append(m)
                 tick("score", i + 1, len(entries))
         for e, m in zip(entries, scored, strict=True):
+            if m and m.get("focus_radius_px") is not None:
+                m["focus_percentile"] = calibration.percentile(m["focus_radius_px"])
             e["metrics"] = m
+        calibration.save()
         for burst in bursts:
             ranks = rank_burst([b["metrics"][config.metric] for b in burst if b["metrics"]])
             for e, r in zip([b for b in burst if b["metrics"]], ranks, strict=True):
@@ -212,13 +221,14 @@ def _eye_stage(
 
 
 def _score_entry(
-    entry: dict, config: PipelineConfig, cache: Cache | None, scorer=None
+    entry: dict, config: PipelineConfig, cache: Cache | None, scorer=None, calibration=None
 ) -> dict | None:
     path = Path(entry["path"])
     eye = entry.get("eye")
     eye_used = bool(eye and eye["confidence"] >= EYE_MIN_CONFIDENCE and entry.get("birds"))
     kind = f"score3:{config.decode_width}:{'eye' if eye_used else 'std'}"
     if cache and (cached := cache.get_json(path, kind)) is not None:
+        cached.pop("focus_percentile", None)
         return cached
     previews = cr3.read_previews(path)
     src = previews.full or previews.prvw
@@ -234,6 +244,8 @@ def _score_entry(
     m["motion_angle"] = round(angle, 1)
     if scorer is not None and eye_used:
         m.update(_focus_score(entry, jpeg, scorer))
+        if calibration is not None and m.get("focus_radius_px") is not None:
+            calibration.record(m["focus_radius_px"])  # newly computed only, cache hits skip
     if cache:
         cache.put_json(path, kind, m)
     return m

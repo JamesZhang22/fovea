@@ -9,7 +9,7 @@ def test_curve_endpoints_and_monotonic() -> None:
     assert radius_to_score(12.0) == 0.0
     assert radius_to_score(20.0) == 0.0
     scores = [radius_to_score(r) for r in np.linspace(0, 12, 50)]
-    assert all(a >= b for a, b in zip(scores, scores[1:]))
+    assert all(a >= b for a, b in zip(scores, scores[1:], strict=False))
 
 
 def test_decode_ordinal_peak_and_confidence() -> None:

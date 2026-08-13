@@ -243,6 +243,9 @@ function InfoBar({
         <span className="ib-abstain">score —</span>
       )}
       {m && m.focus_radius_px != null && <span>blur {m.focus_radius_px.toFixed(1)}px</span>}
+      {m && m.focus_percentile != null && (
+        <span>top {Math.max(1, Math.round((1 - m.focus_percentile) * 100))}%</span>
+      )}
       {m && <span>focus {m.brenner?.toFixed(0)}</span>}
       {blur && <span>{blur}</span>}
       {entry.eye && <span>eye {entry.eye.confidence.toFixed(2)}</span>}
