@@ -34,6 +34,7 @@ dev = [
 ml = [
     "onnx>=1.22.0",
     "onnxscript>=0.7.1",
+    "openpyxl>=3.1.5",
     "pybioclip>=2.1.5",
     "rfdetr>=1.9.1",
 ]

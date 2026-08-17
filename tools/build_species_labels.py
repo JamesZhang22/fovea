@@ -1,14 +1,17 @@
 """Build the bird label-embedding file from TreeOfLife-200M precomputed text embeddings.
 
 Filters the full TOL matrix to class Aves and saves models/species_labels.npz with the
-embedding rows plus scientific/common/family names and the model's logit scale. Runtime
-classification is then softmax(logit_scale * image_emb @ emb.T), no text encoder needed.
+embedding rows plus scientific/common/family names, IOC breeding-range codes for the
+optional region filter, and the model's logit scale. Runtime classification is then
+softmax(logit_scale * image_emb @ emb.T), no text encoder needed.
 
 Usage: uv run python tools/build_species_labels.py [--out models/species_labels.npz]
 """
 
 import argparse
 import json
+import re
+import urllib.request
 from pathlib import Path
 
 import numpy as np
@@ -20,6 +23,34 @@ TOL_REPO = "imageomics/TreeOfLife-200M"
 MODEL_STR = "hf-hub:imageomics/bioclip-2"
 CLASS_RANK_IDX = 2
 FAMILY_RANK_IDX = 4
+
+# IOC World Bird List (CC-BY 4.0), breeding-range codes drive the region filter
+IOC_URL = "https://worldbirdnames.org/master_ioc_list_v15.2.xlsx"
+IOC_CODES = {
+    "NA", "MA", "SA", "EU", "AF", "OR", "AU", "AN", "AO", "PO", "IO", "TrO", "TO", "NO", "SO",
+}  # fmt: skip
+
+
+def ioc_ranges(cache_dir: Path) -> dict[str, str]:
+    """Scientific name -> comma-joined IOC breeding-range codes, parsed from the master list."""
+    import openpyxl
+
+    xlsx = cache_dir / "ioc_master_list.xlsx"
+    if not xlsx.exists():
+        urllib.request.urlretrieve(IOC_URL, xlsx)
+    ws = openpyxl.load_workbook(xlsx, read_only=True).active
+    ranges: dict[str, str] = {}
+    genus = ""
+    for row in ws.iter_rows(min_row=5, values_only=True):
+        if row[5]:
+            genus = str(row[5]).strip()
+        epithet, subspecies, breeding = row[6], row[7], row[11]
+        if not epithet or subspecies:
+            continue
+        codes = [t for t in re.split(r"[,\s]+", str(breeding or "")) if t in IOC_CODES]
+        ranges[f"{genus} {epithet}".lower()] = ",".join(dict.fromkeys(codes))
+    return ranges
+
 
 # TOL common-name casing is inconsistent ("Great blue heron"), normalize to bird-name
 # title case, connector words stay lowercase ("Greater Bird-of-paradise" style)
@@ -45,15 +76,20 @@ def build(out: Path) -> None:
     if emb.shape[1] == len(names):
         emb = emb.T
 
-    rows, scientific, common, family = [], [], [], []
+    ranges = ioc_ranges(out.parent)
+    rows, scientific, common, family, regions = [], [], [], [], []
     for i, (ranks, common_name) in enumerate(names):
         if len(ranks) == 7 and ranks[CLASS_RANK_IDX] == "Aves":
             rows.append(i)
-            scientific.append(f"{ranks[-2]} {ranks[-1]}")
+            sci = f"{ranks[-2]} {ranks[-1]}"
+            scientific.append(sci)
             common.append(title_case(common_name) if common_name else "")
             family.append(ranks[FAMILY_RANK_IDX])
+            regions.append(ranges.get(sci.lower(), ""))
     named = sum(bool(c) for c in common)
+    ranged = sum(bool(r) for r in regions)
     print(f"{len(rows)} Aves rows of {len(names)} | with common name: {named}")
+    print(f"with IOC range: {ranged} ({ranged / len(rows):.0%}), the rest never filter out")
 
     model, _ = open_clip.create_model_from_pretrained(MODEL_STR)
     with torch.no_grad():
@@ -66,6 +102,7 @@ def build(out: Path) -> None:
         scientific=np.array(scientific),
         common=np.array(common),
         family=np.array(family),
+        regions=np.array(regions),
         logit_scale=np.float32(logit_scale),
     )
     print(f"saved {out} ({out.stat().st_size / 1e6:.1f} MB)")
