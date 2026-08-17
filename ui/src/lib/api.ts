@@ -5,6 +5,7 @@ export type Eye = components["schemas"]["Eye"];
 export type BirdBox = components["schemas"]["BirdBox"];
 export type AFPoint = components["schemas"]["AFPoint"];
 export type SpeciesPrediction = components["schemas"]["SpeciesPrediction"];
+export type SpeciesModelStatus = components["schemas"]["SpeciesModelStatus"];
 
 // SSE events are outside the OpenAPI schema, mirrored from api/session.py
 export interface ProgressEvent {
@@ -59,6 +60,14 @@ export async function confirmSpecies(burst: number, common: string | null): Prom
   });
   if (!r.ok) throw new Error((await r.json()).detail ?? r.statusText);
   return r.json();
+}
+
+export async function fetchSpeciesModel(): Promise<SpeciesModelStatus> {
+  return (await fetch("/api/species/model")).json();
+}
+
+export async function startSpeciesModelDownload(): Promise<SpeciesModelStatus> {
+  return (await fetch("/api/species/model", { method: "POST" })).json();
 }
 
 let namesCache: string[] | null = null;

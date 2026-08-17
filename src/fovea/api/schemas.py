@@ -67,6 +67,14 @@ class SpeciesRequest(BaseModel):
     common: str | None  # None clears the confirmation
 
 
+class SpeciesModelStatus(BaseModel):
+    present: bool
+    downloading: bool
+    done_bytes: int
+    total_bytes: int
+    error: str | None
+
+
 class ExportResponse(BaseModel):
     written: int
     skipped_foreign: int

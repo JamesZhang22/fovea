@@ -7,6 +7,7 @@ from fovea.core.ingest.cache import Cache
 from fovea.core.pipeline import PipelineConfig, run_pipeline
 from fovea.core.resources import resource_path
 from fovea.core.score.calibrate import default_calibration_path
+from fovea.core.species.download import species_model_path
 
 PROGRESS_EVERY = 10  # progress events per stage are throttled to every Nth item
 
@@ -22,6 +23,7 @@ class Session:
         self.error: str | None = None
         self.events: queue.Queue[dict | None] = queue.Queue()
         self.lock = threading.Lock()
+        self.model_download = {"state": "idle", "done": 0, "error": None}
 
     def emit(self, event: dict) -> None:
         self.events.put(event)
@@ -39,6 +41,27 @@ class Session:
         if self.cache:
             self.cache.put_json(Path(entry["path"]), "user", user)
         return user
+
+    def start_model_download(self) -> None:
+        """Fetch the species encoder on a worker thread, progress polled via status."""
+        from fovea.core.species.download import download_species_model
+
+        with self.lock:
+            if self.model_download["state"] == "downloading":
+                return
+            self.model_download = {"state": "downloading", "done": 0, "error": None}
+
+        def run() -> None:
+            def progress(done: int, total: int) -> None:
+                self.model_download["done"] = done
+
+            try:
+                download_species_model(progress)
+                self.model_download["state"] = "done"
+            except Exception as exc:
+                self.model_download = {"state": "error", "done": 0, "error": str(exc)}
+
+        threading.Thread(target=run, daemon=True).start()
 
     def confirm_species(self, burst: int, common: str | None) -> list[int]:
         """Set or clear the confirmed species on every frame of a burst, returns their ids."""
@@ -69,14 +92,15 @@ class Session:
         self.error = None
         self.cache = Cache(folder / ".fovea" / "cache.sqlite")
         eye_model = resource_path("models/eye.onnx")
+        species_model = species_model_path()
         config = PipelineConfig(
             detect=request.detect,
             eye=request.eye and eye_model.exists(),
-            species=request.species,
+            species=request.species and species_model is not None,
             detect_model=str(resource_path("models/bird.onnx")),
             eye_model=str(eye_model),
             focus_model=str(resource_path("models/focus.onnx")),
-            species_model=str(resource_path("models/species.onnx")),
+            species_model=str(species_model or ""),
             species_labels=str(resource_path("models/species_labels.npz")),
             calibration_path=str(default_calibration_path()),
             export=False,

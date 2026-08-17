@@ -11,6 +11,7 @@ from fovea.api.schemas import (
     OpenFolderRequest,
     OpenFolderResponse,
     RateRequest,
+    SpeciesModelStatus,
     SpeciesRequest,
     StatusResponse,
     entry_from_pipeline,
@@ -61,6 +62,27 @@ def folder_router(session: Session) -> APIRouter:
             raise HTTPException(404, "no such burst")
         with session.lock:
             return [entry_from_pipeline(i, session.entries[i]) for i in ids]
+
+    @router.get("/api/species/model", response_model=SpeciesModelStatus)
+    def species_model() -> SpeciesModelStatus:
+        from fovea.core.species.download import TOTAL_BYTES, species_model_path
+
+        d = session.model_download
+        return SpeciesModelStatus(
+            present=species_model_path() is not None,
+            downloading=d["state"] == "downloading",
+            done_bytes=d["done"],
+            total_bytes=TOTAL_BYTES,
+            error=d["error"],
+        )
+
+    @router.post("/api/species/model", response_model=SpeciesModelStatus)
+    def download_species_model() -> SpeciesModelStatus:
+        from fovea.core.species.download import species_model_path
+
+        if species_model_path() is None:
+            session.start_model_download()
+        return species_model()
 
     @router.get("/api/species/names", response_model=list[str])
     def species_names() -> list[str]:

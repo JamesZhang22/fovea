@@ -89,6 +89,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/species/model": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Species Model */
+        get: operations["species_model_api_species_model_get"];
+        put?: never;
+        /** Download Species Model */
+        post: operations["download_species_model_api_species_model_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/species/names": {
         parameters: {
             query?: never;
@@ -326,6 +344,19 @@ export interface components {
             /** Rejected */
             rejected?: boolean | null;
         };
+        /** SpeciesModelStatus */
+        SpeciesModelStatus: {
+            /** Present */
+            present: boolean;
+            /** Downloading */
+            downloading: boolean;
+            /** Done Bytes */
+            done_bytes: number;
+            /** Total Bytes */
+            total_bytes: number;
+            /** Error */
+            error: string | null;
+        };
         /** SpeciesPrediction */
         SpeciesPrediction: {
             /** Common */
@@ -510,6 +541,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    species_model_api_species_model_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpeciesModelStatus"];
+                };
+            };
+        };
+    };
+    download_species_model_api_species_model_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpeciesModelStatus"];
                 };
             };
         };

@@ -15,6 +15,8 @@ a = Analysis(
         (str(ROOT / "models" / "bird.onnx"), "models"),
         (str(ROOT / "models" / "focus.onnx"), "models"),
         (str(ROOT / "models" / "focus.onnx.data"), "models"),
+        # species encoder (1.2 GB) is deliberately not bundled, downloaded on first enable
+        (str(ROOT / "models" / "species_labels.npz"), "models"),
     ],
     hiddenimports=[
         "uvicorn.logging",

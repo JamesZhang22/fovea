@@ -136,3 +136,28 @@
 .switch-on .switch-knob {
   transform: translateX(15px);
 }
+
+.settings-download {
+  padding: 3px 8px;
+  background: #222;
+  border: 1px solid #333;
+  border-radius: 4px;
+  color: #ddd;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.settings-download:hover {
+  background: #2a2a2a;
+}
+
+.settings-download-progress {
+  color: #4dd7f5;
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+}
+
+.settings-download-error {
+  color: #ff6b6b;
+  font-size: 12px;
+}

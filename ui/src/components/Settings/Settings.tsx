@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState } from "react";
+import {
+  fetchSpeciesModel,
+  startSpeciesModelDownload,
+  type SpeciesModelStatus,
+} from "../../lib/api";
 import { saveSettings, type PipelineSettings } from "../../lib/settings";
 import "./Settings.css";
+
+const DOWNLOAD_POLL_MS = 1000;
 
 interface Props {
   settings: PipelineSettings;
@@ -9,9 +16,21 @@ interface Props {
 
 export function Settings({ settings, onChange }: Props) {
   const [open, setOpen] = useState(false);
+  const [model, setModel] = useState<SpeciesModelStatus | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => saveSettings(settings), [settings]);
+
+  // model status on open, poll while a download runs
+  useEffect(() => {
+    if (!open) return;
+    fetchSpeciesModel().then(setModel);
+  }, [open]);
+  useEffect(() => {
+    if (!open || !model?.downloading) return;
+    const t = setTimeout(() => fetchSpeciesModel().then(setModel), DOWNLOAD_POLL_MS);
+    return () => clearTimeout(t);
+  }, [open, model]);
 
   useEffect(() => {
     if (!open) return;
@@ -58,11 +77,15 @@ export function Settings({ settings, onChange }: Props) {
 
           <div className={`settings-row${settings.detect ? "" : " settings-row-disabled"}`}>
             <span>Species ID</span>
-            <Switch
-              checked={settings.species}
-              disabled={!settings.detect}
-              onChange={(v) => set({ species: v })}
-            />
+            {model && !model.present ? (
+              <SpeciesDownload model={model} onStatus={setModel} />
+            ) : (
+              <Switch
+                checked={settings.species}
+                disabled={!settings.detect}
+                onChange={(v) => set({ species: v })}
+              />
+            )}
           </div>
 
           <div className="settings-row">
@@ -96,6 +119,31 @@ export function Settings({ settings, onChange }: Props) {
         </div>
       )}
     </div>
+  );
+}
+
+function SpeciesDownload({
+  model,
+  onStatus,
+}: {
+  model: SpeciesModelStatus;
+  onStatus: (s: SpeciesModelStatus) => void;
+}) {
+  if (model.downloading) {
+    const pct = model.total_bytes ? Math.round((100 * model.done_bytes) / model.total_bytes) : 0;
+    return <span className="settings-download-progress">downloading… {pct}%</span>;
+  }
+  return (
+    <span className="settings-control">
+      {model.error && <span className="settings-download-error">failed</span>}
+      <button
+        className="settings-download"
+        title={model.error ?? undefined}
+        onClick={() => startSpeciesModelDownload().then(onStatus)}
+      >
+        {model.error ? "retry" : "download model · 1.2 GB"}
+      </button>
+    </span>
   );
 }
 

@@ -88,3 +88,40 @@ def test_species_keywords_typed_correction_resolves_labels(tmp_path) -> None:
     entry = {"species": [pred()], "user": {"species": "Barred Owl"}}
     config = PipelineConfig(species_labels=str(labels))
     assert species_keywords(entry, config) == ["Nature|Birds|Strigidae|Barred Owl", "Strix varia"]
+
+
+def test_download_species_model_verifies_and_installs(tmp_path, monkeypatch) -> None:
+    import hashlib
+
+    from fovea.core.species import download
+
+    src = tmp_path / "release"
+    src.mkdir()
+    payload = b"tiny model bytes"
+    (src / "species.onnx").write_bytes(payload)
+    (src / "species.onnx.data").write_bytes(payload)
+    files = [("species.onnx", hashlib.sha256(payload).hexdigest(), len(payload))]
+    monkeypatch.setattr(download, "MODEL_FILES", files)
+    monkeypatch.setattr(download, "downloaded_dir", lambda: tmp_path / "dest")
+
+    seen = []
+    download.download_species_model(lambda d, t: seen.append(d), base_url=src.as_uri() + "/")
+    assert (tmp_path / "dest" / "species.onnx").read_bytes() == payload
+    assert not list((tmp_path / "dest").glob("*.partial"))
+    assert seen[-1] == len(payload)
+
+
+def test_download_species_model_rejects_bad_checksum(tmp_path, monkeypatch) -> None:
+    import pytest
+
+    from fovea.core.species import download
+
+    src = tmp_path / "release"
+    src.mkdir()
+    (src / "species.onnx").write_bytes(b"tampered")
+    monkeypatch.setattr(download, "MODEL_FILES", [("species.onnx", "0" * 64, 8)])
+    monkeypatch.setattr(download, "downloaded_dir", lambda: tmp_path / "dest")
+
+    with pytest.raises(ValueError, match="checksum"):
+        download.download_species_model(base_url=src.as_uri() + "/")
+    assert not (tmp_path / "dest" / "species.onnx").exists()
