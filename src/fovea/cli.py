@@ -48,6 +48,7 @@ def cmd_cull(args: argparse.Namespace) -> None:
         detect=args.detect or args.eye or args.species,
         eye=args.eye,
         species=args.species,
+        species_region=args.region,
         export=not args.no_export,
         gap_seconds=args.gap,
         metric=args.metric,
@@ -72,6 +73,12 @@ def add_cull(sub) -> None:
     )
     p.add_argument(
         "--species", action="store_true", help="identify species per burst (implies --detect)"
+    )
+    p.add_argument(
+        "--region",
+        # keys of core.species.classify.REGIONS, not imported to keep CLI startup light
+        choices=["north-america", "south-america", "eurasia", "africa", "south-asia", "australasia"],
+        help="restrict species candidates to a continent (default: all)",
     )
     p.add_argument("--no-group", action="store_true", help="skip burst grouping")
     p.add_argument("--no-score", action="store_true", help="skip focus scoring")

@@ -10,6 +10,27 @@ TOP_K = 3
 _MEAN = np.array([0.48145466, 0.4578275, 0.40821073], dtype=np.float32)
 _STD = np.array([0.26862954, 0.26130258, 0.27577711], dtype=np.float32)
 
+# region key -> IOC breeding-range codes, species without codes always pass the filter
+REGIONS = {
+    "north-america": {"NA", "MA"},
+    "south-america": {"SA"},
+    "eurasia": {"EU"},
+    "africa": {"AF"},
+    "south-asia": {"OR"},
+    "australasia": {"AU"},
+}
+OCEANIC_CODES = {"AN", "AO", "PO", "IO", "TrO", "TO", "NO", "SO"}  # pelagics pass everywhere
+
+
+def region_mask(regions: np.ndarray, region: str | None) -> np.ndarray:
+    """Boolean row mask for a region key, fail-open for unknown or oceanic ranges."""
+    if region is None:
+        return np.ones(len(regions), dtype=bool)
+    allowed = REGIONS[region] | OCEANIC_CODES
+    return np.array(
+        [not r or bool(set(r.split(",")) & allowed) for r in regions.astype(str)], dtype=bool
+    )
+
 
 def label_names(labels_path) -> list[str]:
     """Sorted display names (common, scientific when unnamed) for autocomplete."""
@@ -41,7 +62,7 @@ def merge_groups(probs: np.ndarray, group_idx: np.ndarray, n_groups: int) -> np.
 class SpeciesClassifier:
     """BioCLIP 2 zero-shot bird ID against precomputed Aves text embeddings."""
 
-    def __init__(self, model_path, labels_path) -> None:
+    def __init__(self, model_path, labels_path, region: str | None = None) -> None:
         self.session = ort.InferenceSession(str(model_path), providers=["CPUExecutionProvider"])
         z = np.load(labels_path)
         self.emb = z["emb"]
@@ -49,6 +70,7 @@ class SpeciesClassifier:
         self.scientific = z["scientific"].astype(str)
         self.common = z["common"].astype(str)
         self.family = z["family"].astype(str)
+        self.mask = region_mask(z["regions"], region) if "regions" in z else None
         keys = np.where(self.common != "", np.char.lower(self.common), self.scientific)
         _, self.rep_rows, self.group_idx = np.unique(keys, return_index=True, return_inverse=True)
 
@@ -59,6 +81,8 @@ class SpeciesClassifier:
         x = ((x - _MEAN) / _STD).transpose(2, 0, 1)[None]
         (emb,) = self.session.run(None, {"image": x})
         logits = self.logit_scale * (emb[0] @ self.emb.T)
+        if self.mask is not None:
+            logits[~self.mask] = -np.inf  # softmax renormalizes over the allowed rows
         probs = np.exp(logits - logits.max())
         probs /= probs.sum()
         merged = merge_groups(probs, self.group_idx, len(self.rep_rows))

@@ -37,6 +37,7 @@ class PipelineConfig:
     focus_model: str = "models/focus.onnx"
     species_model: str = "models/species.onnx"
     species_labels: str = "models/species_labels.npz"
+    species_region: str | None = None  # None searches all species, see classify.REGIONS
     calibration_path: str | None = None  # None keeps percentiles seed-only, no persistence
     metric: str = "brenner"
     top_rank: float = 0.8
@@ -252,7 +253,8 @@ def _species_stage(
     labels_path = Path(config.species_labels)
     if not model_path.exists() or not labels_path.exists():
         return
-    kind = f"species:{model_path.stat().st_mtime_ns}:{labels_path.stat().st_mtime_ns}"
+    region = config.species_region or "all"
+    kind = f"species:{model_path.stat().st_mtime_ns}:{labels_path.stat().st_mtime_ns}:{region}"
     classifier = None
     for n, burst in enumerate(bursts):
         tick("species", n + 1, len(bursts))
@@ -263,7 +265,7 @@ def _species_stage(
         preds = (cache.get_json(path, kind) or {}).get("predictions") if cache else None
         if preds is None:
             if classifier is None:
-                classifier = SpeciesClassifier(model_path, labels_path)
+                classifier = SpeciesClassifier(model_path, labels_path, config.species_region)
             previews = cr3.read_previews(path)
             src = previews.full or previews.prvw
             if src is None:

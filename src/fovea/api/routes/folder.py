@@ -26,9 +26,13 @@ def folder_router(session: Session) -> APIRouter:
 
     @router.post("/api/folder", response_model=OpenFolderResponse)
     def open_folder(request: OpenFolderRequest) -> OpenFolderResponse:
+        from fovea.core.species.classify import REGIONS
+
         folder = Path(request.path).expanduser().resolve()
         if not folder.is_dir():
             raise HTTPException(404, f"not a directory: {folder}")
+        if request.species_region is not None and request.species_region not in REGIONS:
+            raise HTTPException(422, f"region must be one of {sorted(REGIONS)}")
         if session.status == "running":
             raise HTTPException(409, "pipeline already running")
         session.start(request)

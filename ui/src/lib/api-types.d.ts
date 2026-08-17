@@ -317,6 +317,8 @@ export interface components {
              * @default true
              */
             species: boolean;
+            /** Species Region */
+            species_region?: string | null;
             /**
              * Gap Seconds
              * @default 3

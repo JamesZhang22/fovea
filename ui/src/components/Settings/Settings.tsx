@@ -4,7 +4,7 @@ import {
   startSpeciesModelDownload,
   type SpeciesModelStatus,
 } from "../../lib/api";
-import { saveSettings, type PipelineSettings } from "../../lib/settings";
+import { saveSettings, SPECIES_REGIONS, type PipelineSettings } from "../../lib/settings";
 import "./Settings.css";
 
 const DOWNLOAD_POLL_MS = 1000;
@@ -86,6 +86,24 @@ export function Settings({ settings, onChange }: Props) {
                 onChange={(v) => set({ species: v })}
               />
             )}
+          </div>
+
+          <div
+            className={`settings-row${settings.detect && settings.species ? "" : " settings-row-disabled"}`}
+          >
+            <span>Region</span>
+            <select
+              value={settings.species_region ?? ""}
+              disabled={!settings.detect || !settings.species}
+              onChange={(e) => set({ species_region: e.target.value || null })}
+            >
+              <option value="">All regions</option>
+              {SPECIES_REGIONS.map(([key, label]) => (
+                <option key={key} value={key}>
+                  {label}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="settings-row">

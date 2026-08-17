@@ -10,6 +10,7 @@ class OpenFolderRequest(BaseModel):
     detect: bool = True
     eye: bool = True
     species: bool = True
+    species_region: str | None = None
     gap_seconds: float = 3.0
     metric: str = "brenner"
 

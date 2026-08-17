@@ -97,6 +97,7 @@ class Session:
             detect=request.detect,
             eye=request.eye and eye_model.exists(),
             species=request.species and species_model is not None,
+            species_region=request.species_region,
             detect_model=str(resource_path("models/bird.onnx")),
             eye_model=str(eye_model),
             focus_model=str(resource_path("models/focus.onnx")),

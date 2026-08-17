@@ -125,3 +125,13 @@ def test_download_species_model_rejects_bad_checksum(tmp_path, monkeypatch) -> N
     with pytest.raises(ValueError, match="checksum"):
         download.download_species_model(base_url=src.as_uri() + "/")
     assert not (tmp_path / "dest" / "species.onnx").exists()
+
+
+def test_region_mask_filters_by_code_and_fails_open() -> None:
+    from fovea.core.species.classify import region_mask
+
+    regions = np.array(["NA,MA", "AF", "", "SO", "EU,OR"])
+    assert region_mask(regions, None).all()
+    assert region_mask(regions, "north-america").tolist() == [True, False, True, True, False]
+    assert region_mask(regions, "africa").tolist() == [False, True, True, True, False]
+    assert region_mask(regions, "south-asia").tolist() == [False, False, True, True, True]
