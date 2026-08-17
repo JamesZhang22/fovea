@@ -26,6 +26,7 @@ class PipelineConfig:
     score: bool = True
     detect: bool = False
     eye: bool = False
+    species: bool = False
     export: bool = True
     gap_seconds: float = 3.0
     decode_width: int = 3480
@@ -33,6 +34,8 @@ class PipelineConfig:
     detect_model: str = "models/bird.onnx"
     eye_model: str = "models/eye.onnx"
     focus_model: str = "models/focus.onnx"
+    species_model: str = "models/species.onnx"
+    species_labels: str = "models/species_labels.npz"
     calibration_path: str | None = None  # None keeps percentiles seed-only, no persistence
     metric: str = "brenner"
     top_rank: float = 0.8
@@ -94,6 +97,9 @@ def run_pipeline(
             ranks = rank_burst([b["metrics"][config.metric] for b in burst if b["metrics"]])
             for e, r in zip([b for b in burst if b["metrics"]], ranks, strict=True):
                 e["rank"] = r
+
+    if config.species:
+        _species_stage(bursts, config, cache, tick)
 
     if config.export:
         written = skipped = 0
@@ -218,6 +224,66 @@ def _eye_stage(
         e["eye"] = locator.locate(jpeg, best_box)
         if cache:
             cache.put_json(path, kind, {"eye": e["eye"]})
+
+
+def best_species_frame(burst: list[dict]) -> dict | None:
+    """Frame to classify: sharpest trusted eye, then eye confidence, then box confidence."""
+    candidates = [e for e in burst if e.get("birds")]
+    if not candidates:
+        return None
+    return max(
+        candidates,
+        key=lambda e: (
+            (e.get("metrics") or {}).get("focus_score") or -1.0,
+            (e.get("eye") or {}).get("confidence") or 0.0,
+            max(b["confidence"] for b in e["birds"]),
+        ),
+    )
+
+
+def _species_stage(
+    bursts: list[list[dict]], config: PipelineConfig, cache: Cache | None, tick: Progress
+) -> None:
+    """Classify each burst's best frame once, annotate every frame of the burst."""
+    from fovea.core.species.classify import CROP_PAD_FRACTION, SpeciesClassifier
+
+    model_path = Path(config.species_model)
+    labels_path = Path(config.species_labels)
+    if not model_path.exists() or not labels_path.exists():
+        return
+    kind = f"species:{model_path.stat().st_mtime_ns}:{labels_path.stat().st_mtime_ns}"
+    classifier = None
+    for n, burst in enumerate(bursts):
+        tick("species", n + 1, len(bursts))
+        best = best_species_frame(burst)
+        if best is None:
+            continue
+        path = Path(best["path"])
+        preds = (cache.get_json(path, kind) or {}).get("predictions") if cache else None
+        if preds is None:
+            if classifier is None:
+                classifier = SpeciesClassifier(model_path, labels_path)
+            previews = cr3.read_previews(path)
+            src = previews.full or previews.prvw
+            if src is None:
+                continue
+            im = decode.decode_scaled(cr3.read_range(path, src), config.decode_width)
+            scale = im.width / (best["meta"].get("ImageWidth") or im.width)
+            box = max(best["birds"], key=lambda b: b["confidence"])
+            w, h = box["x1"] - box["x0"], box["y1"] - box["y0"]
+            crop = im.crop(
+                (
+                    max(0, int((box["x0"] - CROP_PAD_FRACTION * w) * scale)),
+                    max(0, int((box["y0"] - CROP_PAD_FRACTION * h) * scale)),
+                    min(im.width, int((box["x1"] + CROP_PAD_FRACTION * w) * scale)),
+                    min(im.height, int((box["y1"] + CROP_PAD_FRACTION * h) * scale)),
+                )
+            )
+            preds = classifier.classify(crop)
+            if cache:
+                cache.put_json(path, kind, {"predictions": preds})
+        for e in burst:
+            e["species"] = preds
 
 
 def _score_entry(
