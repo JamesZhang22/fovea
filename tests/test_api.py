@@ -97,3 +97,27 @@ def test_export_writes_verdicts(tmp_path: Path) -> None:
     client.post("/api/rate", json={"id": 0, "rating": 2})
     assert client.post("/api/export").json() == {"written": 2, "skipped_foreign": 1}
     assert 'xmp:Rating="2"' in (tmp_path / "IMG_0001.xmp").read_text()
+
+
+def test_confirm_species_applies_to_burst(tmp_path: Path) -> None:
+    for name in ("IMG_0001.CR3", "IMG_0002.CR3"):
+        (tmp_path / name).write_bytes(b"fake")
+    client = TestClient(create_app())
+    client.post("/api/folder", json={"path": str(tmp_path), "detect": False, "eye": False})
+    wait_ready(client)
+    burst = client.get("/api/entries").json()[0]["burst"]
+
+    r = client.post("/api/species", json={"burst": burst, "common": "Great Egret"})
+    assert r.status_code == 200
+    assert all(e["species_user"] == "Great Egret" for e in r.json())
+
+    fresh = TestClient(create_app())
+    fresh.post("/api/folder", json={"path": str(tmp_path), "detect": False, "eye": False})
+    wait_ready(fresh)
+    e = fresh.get("/api/entries").json()[0]
+    assert e["species_user"] == "Great Egret"
+
+    r = client.post("/api/species", json={"burst": burst, "common": None})
+    assert all(e["species_user"] is None for e in r.json())
+
+    assert client.post("/api/species", json={"burst": 999, "common": "x"}).status_code == 404

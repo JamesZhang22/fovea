@@ -11,6 +11,14 @@ _MEAN = np.array([0.48145466, 0.4578275, 0.40821073], dtype=np.float32)
 _STD = np.array([0.26862954, 0.26130258, 0.27577711], dtype=np.float32)
 
 
+def label_names(labels_path) -> list[str]:
+    """Sorted display names (common, scientific when unnamed) for autocomplete."""
+    z = np.load(labels_path)
+    common = z["common"].astype(str)
+    scientific = z["scientific"].astype(str)
+    return sorted(set(np.where(common != "", common, scientific)))
+
+
 def merge_groups(probs: np.ndarray, group_idx: np.ndarray, n_groups: int) -> np.ndarray:
     """Sum probability mass over label rows sharing a display name (taxonomic synonyms)."""
     merged = np.zeros(n_groups, dtype=probs.dtype)

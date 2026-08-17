@@ -11,11 +11,13 @@ from fovea.api.schemas import (
     OpenFolderRequest,
     OpenFolderResponse,
     RateRequest,
+    SpeciesRequest,
     StatusResponse,
     entry_from_pipeline,
 )
 from fovea.api.session import Session
 from fovea.core.pipeline import PipelineConfig, export_verdicts
+from fovea.core.resources import resource_path
 
 
 def folder_router(session: Session) -> APIRouter:
@@ -51,6 +53,23 @@ def folder_router(session: Session) -> APIRouter:
         session.rate(request.id, request.rating, request.rejected)
         with session.lock:
             return entry_from_pipeline(request.id, session.entries[request.id])
+
+    @router.post("/api/species", response_model=list[Entry])
+    def confirm_species(request: SpeciesRequest) -> list[Entry]:
+        ids = session.confirm_species(request.burst, request.common)
+        if not ids:
+            raise HTTPException(404, "no such burst")
+        with session.lock:
+            return [entry_from_pipeline(i, session.entries[i]) for i in ids]
+
+    @router.get("/api/species/names", response_model=list[str])
+    def species_names() -> list[str]:
+        labels = resource_path("models/species_labels.npz")
+        if not labels.exists():
+            return []
+        from fovea.core.species.classify import label_names
+
+        return label_names(labels)
 
     @router.post("/api/export", response_model=ExportResponse)
     def export() -> ExportResponse:

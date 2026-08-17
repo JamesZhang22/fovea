@@ -72,6 +72,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/species": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirm Species */
+        post: operations["confirm_species_api_species_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/species/names": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Species Names */
+        get: operations["species_names_api_species_names_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/export": {
         parameters: {
             query?: never;
@@ -214,6 +248,10 @@ export interface components {
             /** Birds */
             birds: components["schemas"]["BirdBox"][] | null;
             af: components["schemas"]["AFInfo"] | null;
+            /** Species */
+            species: components["schemas"]["SpeciesPrediction"][] | null;
+            /** Species User */
+            species_user: string | null;
             /** Shot Time */
             shot_time: string | null;
             /** User Rating */
@@ -257,6 +295,11 @@ export interface components {
              */
             eye: boolean;
             /**
+             * Species
+             * @default true
+             */
+            species: boolean;
+            /**
              * Gap Seconds
              * @default 3
              */
@@ -282,6 +325,24 @@ export interface components {
             rating?: number | null;
             /** Rejected */
             rejected?: boolean | null;
+        };
+        /** SpeciesPrediction */
+        SpeciesPrediction: {
+            /** Common */
+            common: string | null;
+            /** Scientific */
+            scientific: string;
+            /** Family */
+            family: string | null;
+            /** Confidence */
+            confidence: number;
+        };
+        /** SpeciesRequest */
+        SpeciesRequest: {
+            /** Burst */
+            burst: number;
+            /** Common */
+            common: string | null;
         };
         /** StatusResponse */
         StatusResponse: {
@@ -416,6 +477,59 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    confirm_species_api_species_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SpeciesRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Entry"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    species_names_api_species_names_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string[];
                 };
             };
         };

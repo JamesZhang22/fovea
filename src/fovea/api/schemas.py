@@ -9,6 +9,7 @@ class OpenFolderRequest(BaseModel):
     path: str
     detect: bool = True
     eye: bool = True
+    species: bool = True
     gap_seconds: float = 3.0
     metric: str = "brenner"
 
@@ -54,6 +55,18 @@ class AFInfo(BaseModel):
     display_points: list[AFPoint]
 
 
+class SpeciesPrediction(BaseModel):
+    common: str | None
+    scientific: str
+    family: str | None
+    confidence: float
+
+
+class SpeciesRequest(BaseModel):
+    burst: int
+    common: str | None  # None clears the confirmation
+
+
 class ExportResponse(BaseModel):
     written: int
     skipped_foreign: int
@@ -79,6 +92,8 @@ class Entry(BaseModel):
     eye_used: bool
     birds: list[BirdBox] | None
     af: AFInfo | None
+    species: list[SpeciesPrediction] | None
+    species_user: str | None
     shot_time: str | None
     user_rating: int | None
     rejected: bool
@@ -102,6 +117,8 @@ def entry_from_pipeline(idx: int, e: dict) -> Entry:
         eye_used=bool(eye and eye["confidence"] >= EYE_MIN_CONFIDENCE),
         birds=e.get("birds"),
         af=e.get("af"),
+        species=e.get("species"),
+        species_user=e.get("user", {}).get("species"),
         shot_time=meta.get("DateTimeOriginal"),
         user_rating=e.get("user", {}).get("rating"),
         rejected=e.get("user", {}).get("rejected", False),

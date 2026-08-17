@@ -40,6 +40,25 @@ class Session:
             self.cache.put_json(Path(entry["path"]), "user", user)
         return user
 
+    def confirm_species(self, burst: int, common: str | None) -> list[int]:
+        """Set or clear the confirmed species on every frame of a burst, returns their ids."""
+        ids = []
+        with self.lock:
+            for i, entry in enumerate(self.entries):
+                if entry.get("burst") != burst:
+                    continue
+                user = dict(entry.get("user") or {})
+                if common is None:
+                    user.pop("species", None)
+                else:
+                    user["species"] = common
+                entry["user"] = user
+                ids.append(i)
+        if self.cache:
+            for i in ids:
+                self.cache.put_json(Path(self.entries[i]["path"]), "user", self.entries[i]["user"])
+        return ids
+
     def start(self, request: OpenFolderRequest) -> None:
         threading.Thread(target=self._run, args=(request,), daemon=True).start()
 
@@ -53,9 +72,12 @@ class Session:
         config = PipelineConfig(
             detect=request.detect,
             eye=request.eye and eye_model.exists(),
+            species=request.species,
             detect_model=str(resource_path("models/bird.onnx")),
             eye_model=str(eye_model),
             focus_model=str(resource_path("models/focus.onnx")),
+            species_model=str(resource_path("models/species.onnx")),
+            species_labels=str(resource_path("models/species_labels.npz")),
             calibration_path=str(default_calibration_path()),
             export=False,
             gap_seconds=request.gap_seconds,
