@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { fullUrl, rate, type Entry } from "../../lib/api";
 import { Filmstrip } from "../Filmstrip/Filmstrip";
 import { Overlays } from "../Overlays/Overlays";
+import { Species } from "../Species/Species";
 import "./Detail.css";
 
 export interface OverlayToggles {
@@ -16,6 +17,7 @@ interface Props {
   onSelect: (id: number) => void;
   onClose: () => void;
   onUpdate: (updated: Entry) => void;
+  onUpdateMany: (updated: Entry[]) => void;
 }
 
 const MAX_SCALE = 4;
@@ -27,12 +29,13 @@ interface Transform {
   y: number;
 }
 
-export function Detail({ entry, entries, onSelect, onClose, onUpdate }: Props) {
+export function Detail({ entry, entries, onSelect, onClose, onUpdate, onUpdateMany }: Props) {
   const viewRef = useRef<HTMLDivElement>(null);
   const [view, setView] = useState({ w: 800, h: 600 });
   const [transform, setTransform] = useState<Transform | null>(null); // null = fit, centered
   const [toggles, setToggles] = useState<OverlayToggles>({ eye: true, af: true, info: true });
   const [loadedId, setLoadedId] = useState<number | null>(null);
+  const [speciesOpen, setSpeciesOpen] = useState(false);
 
   const W = entry.width ?? 6960;
   const H = entry.height ?? 4640;
@@ -112,17 +115,22 @@ export function Detail({ entry, entries, onSelect, onClose, onUpdate }: Props) {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // typing in an input (species search, folder path) must not trigger hotkeys
+      if ((e.target as HTMLElement).tagName === "INPUT") return;
       const i = entries.findIndex((b) => b.id === entry.id);
       const step = (delta: number) => {
         const next = entries[i + delta];
         if (next) onSelect(next.id);
       };
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        if (speciesOpen) setSpeciesOpen(false);
+        else onClose();
+      } else if (e.key === "s" && entry.species) setSpeciesOpen((o) => !o);
       else if (e.key === "e") setToggles((t) => ({ ...t, eye: !t.eye }));
       else if (e.key === "a") setToggles((t) => ({ ...t, af: !t.af }));
       else if (e.key === "i") setToggles((t) => ({ ...t, info: !t.info }));
-      else if (e.key === "ArrowLeft" || e.key === "k") step(-1);
-      else if (e.key === "ArrowRight" || e.key === "j") step(1);
+      else if (e.key === "ArrowLeft" || e.key === "j") step(-1);
+      else if (e.key === "ArrowRight" || e.key === "k") step(1);
       else if (e.key >= "1" && e.key <= "5") {
         const n = Number(e.key);
         rate(entry.id, { rating: n === entry.user_rating ? 0 : n }).then(onUpdate);
@@ -144,7 +152,7 @@ export function Detail({ entry, entries, onSelect, onClose, onUpdate }: Props) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [entry, entries, onClose, onSelect, onUpdate]);
+  }, [entry, entries, onClose, onSelect, onUpdate, speciesOpen]);
 
   // preload neighbours so filmstrip flips feel instant
   useEffect(() => {
@@ -209,6 +217,13 @@ export function Detail({ entry, entries, onSelect, onClose, onUpdate }: Props) {
           {showCurrent && <Overlays entry={entry} toggles={toggles} />}
         </div>
         {toggles.info && <InfoBar entry={entry} scale={scale} fitScale={fitScale} />}
+        {speciesOpen && (
+          <Species
+            entry={entry}
+            onUpdateMany={onUpdateMany}
+            onClose={() => setSpeciesOpen(false)}
+          />
+        )}
       </div>
       <Filmstrip entries={entries} currentId={entry.id} onSelect={onSelect} />
     </div>
@@ -248,11 +263,21 @@ function InfoBar({
       )}
       {m && <span>focus {m.brenner?.toFixed(0)}</span>}
       {blur && <span>{blur}</span>}
+      {entry.species_user ? (
+        <span className="ib-species ib-species-confirmed">{entry.species_user} ✓</span>
+      ) : (
+        entry.species?.[0] && (
+          <span className="ib-species">
+            {entry.species[0].common ?? entry.species[0].scientific}{" "}
+            {entry.species[0].confidence.toFixed(2)}
+          </span>
+        )
+      )}
       {entry.eye && <span>eye {entry.eye.confidence.toFixed(2)}</span>}
       {entry.user_rating != null && <span className="ib-rating">{entry.user_rating}★</span>}
       {entry.rejected && <span className="ib-reject">REJECTED</span>}
       <span className="dim">
-        {zoomLabel} · j/k nav · 1-5 rate · x reject · [ ] burst · e/a/i overlays · esc
+        {zoomLabel} · j/k nav · 1-5 rate · x reject · [ ] burst · s species · e/a/i overlays · esc
       </span>
     </div>
   );

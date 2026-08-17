@@ -41,7 +41,9 @@ export function Settings({ settings, onChange }: Props) {
             <span>Bird detection</span>
             <Switch
               checked={settings.detect}
-              onChange={(v) => set({ detect: v, eye: v && settings.eye })}
+              onChange={(v) =>
+                set({ detect: v, eye: v && settings.eye, species: v && settings.species })
+              }
             />
           </div>
 
@@ -51,6 +53,15 @@ export function Settings({ settings, onChange }: Props) {
               checked={settings.eye}
               disabled={!settings.detect}
               onChange={(v) => set({ eye: v })}
+            />
+          </div>
+
+          <div className={`settings-row${settings.detect ? "" : " settings-row-disabled"}`}>
+            <span>Species ID</span>
+            <Switch
+              checked={settings.species}
+              disabled={!settings.detect}
+              onChange={(v) => set({ species: v })}
             />
           </div>
 

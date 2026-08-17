@@ -1,6 +1,7 @@
 export interface PipelineSettings {
   detect: boolean;
   eye: boolean;
+  species: boolean;
   gap_seconds: number;
   metric: "brenner" | "tenengrad" | "edge_sharpness";
 }
@@ -8,6 +9,7 @@ export interface PipelineSettings {
 export const DEFAULT_SETTINGS: PipelineSettings = {
   detect: true,
   eye: true,
+  species: true,
   gap_seconds: 3.0,
   metric: "brenner",
 };

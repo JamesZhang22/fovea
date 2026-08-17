@@ -109,6 +109,12 @@ export default function App() {
           onSelect={setSelected}
           onClose={() => setSelected(null)}
           onUpdate={(u) => setEntries((es) => es.map((e) => (e.id === u.id ? u : e)))}
+          onUpdateMany={(us) =>
+            setEntries((es) => {
+              const byId = new Map(us.map((u) => [u.id, u]));
+              return es.map((e) => byId.get(e.id) ?? e);
+            })
+          }
         />
       ) : (
         <Grid entries={entries} selected={selected} onSelect={setSelected} scrollPos={gridScroll} />
