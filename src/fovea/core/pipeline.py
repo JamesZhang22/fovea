@@ -18,6 +18,7 @@ MIN_PATCH_PX = 256  # focus metrics get unstable below this patch size
 EYE_PATCH_FRACTION = 0.25  # eye patch side as a fraction of the bird box side
 EYE_MIN_CONFIDENCE = 0.5  # from the val error-vs-confidence curve, below this predictions are junk
 MIN_EYE_BOX_PX = 400  # bird box below this means the eye is too small to score honestly
+SPECIES_KEYWORD_MIN_CONFIDENCE = 0.5  # unconfirmed predictions below this stay out of sidecars
 
 
 @dataclass
@@ -352,8 +353,44 @@ def _export_entry(entry: dict, config: PipelineConfig) -> bool:
     if sidecar_path(path).exists():
         return False
     rating = rating_for(entry.get("rank"), entry.get("burst_size", 1), config.top_rank)
-    write_sidecar(path, Sidecar(rating=rating, fovea=_fovea_fields(entry, config)))
+    sidecar = Sidecar(
+        rating=rating,
+        keywords=species_keywords(entry, config),
+        fovea=_fovea_fields(entry, config),
+    )
+    write_sidecar(path, sidecar)
     return True
+
+
+def species_keywords(entry: dict, config: PipelineConfig) -> list[str]:
+    """Nature|Birds|Family|Common hierarchy plus the scientific name as a flat keyword.
+
+    A user-confirmed species always exports, an unconfirmed prediction only above the
+    confidence floor. Typed corrections outside the top-3 resolve via the labels file.
+    """
+    confirmed = (entry.get("user") or {}).get("species")
+    preds = entry.get("species") or []
+    if confirmed:
+        match = next((p for p in preds if (p["common"] or p["scientific"]) == confirmed), None)
+        if match:
+            name, scientific, family = confirmed, match["scientific"], match["family"]
+        else:
+            labels = Path(config.species_labels)
+            scientific, family = (None, None)
+            if labels.exists():
+                from fovea.core.species.classify import species_info
+
+                scientific, family = species_info(labels, confirmed)
+            name = confirmed
+    elif preds and preds[0]["confidence"] >= SPECIES_KEYWORD_MIN_CONFIDENCE:
+        p = preds[0]
+        name, scientific, family = p["common"] or p["scientific"], p["scientific"], p["family"]
+    else:
+        return []
+    keywords = ["|".join(["Nature", "Birds"] + ([family] if family else []) + [name])]
+    if scientific and scientific != name:
+        keywords.append(scientific)
+    return keywords
 
 
 def _fovea_fields(entry: dict, config: PipelineConfig) -> dict[str, object]:
@@ -387,8 +424,12 @@ def export_verdicts(entries: list[dict], config: PipelineConfig) -> tuple[int, i
             rating = None
         else:
             rating = rating_for(entry.get("rank"), entry.get("burst_size", 1), config.top_rank)
-        write_sidecar(
-            path, Sidecar(rating=rating, rejected=rejected, fovea=_fovea_fields(entry, config))
+        sidecar = Sidecar(
+            rating=rating,
+            rejected=rejected,
+            keywords=species_keywords(entry, config),
+            fovea=_fovea_fields(entry, config),
         )
+        write_sidecar(path, sidecar)
         written += 1
     return written, skipped

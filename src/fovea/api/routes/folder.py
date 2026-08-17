@@ -77,7 +77,8 @@ def folder_router(session: Session) -> APIRouter:
             raise HTTPException(409, "no folder loaded")
         with session.lock:
             entries = list(session.entries)
-        written, skipped = export_verdicts(entries, PipelineConfig())
+        config = PipelineConfig(species_labels=str(resource_path("models/species_labels.npz")))
+        written, skipped = export_verdicts(entries, config)
         return ExportResponse(written=written, skipped_foreign=skipped)
 
     @router.get("/api/events")

@@ -19,6 +19,18 @@ def label_names(labels_path) -> list[str]:
     return sorted(set(np.where(common != "", common, scientific)))
 
 
+def species_info(labels_path, name: str) -> tuple[str | None, str | None]:
+    """Scientific name and family for a display name, (None, None) when unknown."""
+    z = np.load(labels_path)
+    common = z["common"].astype(str)
+    scientific = z["scientific"].astype(str)
+    idx = np.flatnonzero(np.where(common != "", common, scientific) == name)
+    if not len(idx):
+        return None, None
+    row = idx[0]
+    return scientific[row], z["family"].astype(str)[row] or None
+
+
 def merge_groups(probs: np.ndarray, group_idx: np.ndarray, n_groups: int) -> np.ndarray:
     """Sum probability mass over label rows sharing a display name (taxonomic synonyms)."""
     merged = np.zeros(n_groups, dtype=probs.dtype)

@@ -32,3 +32,59 @@ def test_merge_groups_sums_synonym_mass() -> None:
     probs = np.array([0.5, 0.3, 0.2])
     merged = merge_groups(probs, np.array([0, 1, 0]), 2)
     assert np.allclose(merged, [0.7, 0.3])
+
+
+def pred(common="Great Egret", scientific="Ardea alba", family="Ardeidae", conf=0.9) -> dict:
+    return {"common": common, "scientific": scientific, "family": family, "confidence": conf}
+
+
+def test_species_keywords_from_confident_prediction() -> None:
+    from fovea.core.pipeline import PipelineConfig, species_keywords
+
+    entry = {"species": [pred()]}
+    assert species_keywords(entry, PipelineConfig()) == [
+        "Nature|Birds|Ardeidae|Great Egret",
+        "Ardea alba",
+    ]
+
+
+def test_species_keywords_skips_low_confidence() -> None:
+    from fovea.core.pipeline import PipelineConfig, species_keywords
+
+    entry = {"species": [pred(conf=0.3)]}
+    assert species_keywords(entry, PipelineConfig()) == []
+
+
+def test_species_keywords_confirmed_wins_and_ignores_floor() -> None:
+    from fovea.core.pipeline import PipelineConfig, species_keywords
+
+    entry = {
+        "species": [pred(conf=0.3), pred("Snowy Egret", "Egretta thula", "Ardeidae", 0.2)],
+        "user": {"species": "Snowy Egret"},
+    }
+    assert species_keywords(entry, PipelineConfig()) == [
+        "Nature|Birds|Ardeidae|Snowy Egret",
+        "Egretta thula",
+    ]
+
+
+def test_species_keywords_without_family_or_common() -> None:
+    from fovea.core.pipeline import PipelineConfig, species_keywords
+
+    entry = {"species": [pred(common=None, family=None)]}
+    assert species_keywords(entry, PipelineConfig()) == ["Nature|Birds|Ardea alba"]
+
+
+def test_species_keywords_typed_correction_resolves_labels(tmp_path) -> None:
+    from fovea.core.pipeline import PipelineConfig, species_keywords
+
+    labels = tmp_path / "labels.npz"
+    np.savez(
+        labels,
+        common=np.array(["Barred Owl"]),
+        scientific=np.array(["Strix varia"]),
+        family=np.array(["Strigidae"]),
+    )
+    entry = {"species": [pred()], "user": {"species": "Barred Owl"}}
+    config = PipelineConfig(species_labels=str(labels))
+    assert species_keywords(entry, config) == ["Nature|Birds|Strigidae|Barred Owl", "Strix varia"]
