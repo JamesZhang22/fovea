@@ -1,4 +1,4 @@
-.PHONY: dev api test lint check gen-api build-ui app
+.PHONY: dev test lint check gen-api build-ui app recache
 
 dev:  ## api + ui dev servers together, Ctrl+C stops both
 	@trap 'kill 0' INT TERM EXIT; \
@@ -6,8 +6,11 @@ dev:  ## api + ui dev servers together, Ctrl+C stops both
 	( cd ui && pnpm dev ) & \
 	wait
 
-api:  ## backend only
-	uv run python -m fovea.api.app
+recache:  ## clear pipeline cache, keep user verdicts: make recache DIR=<folder>
+	@test -n "$(DIR)" || { echo "usage: make recache DIR=<folder>"; exit 1; }
+	@test -f "$(DIR)/.fovea/cache.sqlite" || { echo "no cache at $(DIR)/.fovea"; exit 1; }
+	@sqlite3 "$(DIR)/.fovea/cache.sqlite" "delete from entries where kind != 'user'"
+	@echo "cleared pipeline cache in $(DIR), reopen the folder to recompute"
 
 test:
 	uv run pytest -q
