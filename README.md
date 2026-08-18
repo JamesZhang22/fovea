@@ -76,3 +76,7 @@ make dev      # FastAPI (:7343) + Vite (:5173)
 make check    # ruff + tsc + oxlint + pytest
 make app      # PyInstaller → dist/fovea.app
 ```
+
+## Licensing
+
+MIT. Detection uses [RF-DETR](https://github.com/roboflow/rf-detr) (Apache-2.0), species ID uses [BioCLIP 2](https://imageomics.github.io/bioclip-2/) (MIT) with region data from the [IOC World Bird List](https://www.worldbirdnames.org/) (CC-BY 4.0). The eye and focus models are trained only on this project's own labeled photos.
