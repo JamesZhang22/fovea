@@ -11,15 +11,15 @@ A morning of shooting at 15–30 fps comes home as a few thousand raw files, and
 
 ## What it does
 
-- **Finds the eye**: a bird detector (RF-DETR) plus an eye keypoint model trained from scratch on hand-labeled photos from real shoots.
-- **Scores focus**: an ordinal CNN estimates physical blur radius (px) at the eye, mapped through a fixed radius -> score curve and a running percentile calibration.
-- **Display camera autofocus**: Canon AFInfo2 decoded to in-focus AF boxes overlaid.
-- **Knows what you shot**: BioCLIP 2 zero-shot species ID over 11k bird species, one inference per burst, top-3 with confidences and optional continent filter.
-- **Lightroom**: ratings, reject flags, hierarchical keywords, and all measurements under a `fovea:` XMP namespace
-- **Fast**: embedded JPEG extraction by byte range (never demosaic), DCT-scaled decode, SQLite cache keyed on file+model versions.
+- **Eye detection**: an RF-DETR bird detector finds the bird, then a keypoint model trained from scratch on hand-labeled shots pins the eye.
+- **Focus score**: a small ordinal CNN estimates the physical blur radius at the eye in pixels, then maps it to 0–100 with a percentile that tells you how the shot ranks against your own library.
+- **Autofocus overlay**: decodes Canon's AF metadata and draws the in-focus points over the frame, so you can see what the camera thought it locked onto.
+- **Species ID**: BioCLIP 2 identifies the bird zero-shot from 11k species, once per burst, with top-3 confidences and an optional continent filter.
+- **Lightroom handoff**: ratings, reject flags, and hierarchical species keywords land in XMP sidecars that Lightroom reads on import, with every measurement kept under a `fovea:` namespace.
+- **Speed**: reads the JPEG embedded in each CR3 by byte range instead of demosaicing raw, decodes at reduced DCT scale, and caches everything, so a folder you've seen before opens instantly.
 
-| Species confirm | Burst grid |
-| --------------- | ---------- |
+| Species | Grid |
+| ------- | ---- |
 | ![Species editor](images/README/species-editor.png) | ![Burst grid](images/README/grid.png) |
 
 ## How it works
