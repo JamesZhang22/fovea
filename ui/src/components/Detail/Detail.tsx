@@ -125,7 +125,10 @@ export function Detail({ entry, entries, onSelect, onClose, onUpdate, onUpdateMa
       if (e.key === "Escape") {
         if (speciesOpen) setSpeciesOpen(false);
         else onClose();
-      } else if (e.key === "s" && entry.species) setSpeciesOpen((o) => !o);
+      } else if (e.key === "s" && entry.species) {
+        e.preventDefault();
+        setSpeciesOpen((o) => !o);
+      }
       else if (e.key === "e") setToggles((t) => ({ ...t, eye: !t.eye }));
       else if (e.key === "a") setToggles((t) => ({ ...t, af: !t.af }));
       else if (e.key === "i") setToggles((t) => ({ ...t, info: !t.info }));
