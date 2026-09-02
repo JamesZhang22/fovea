@@ -13,6 +13,7 @@ import time
 from pathlib import Path
 
 import numpy as np
+import onnxruntime as ort
 import torch
 
 sys.path.insert(0, str(Path(__file__).parent))
@@ -37,8 +38,6 @@ def export(weights: Path, out: Path) -> None:
         opset_version=17,
     )
     print(f"exported {out} ({out.stat().st_size / 1e6:.1f} MB)")
-
-    import onnxruntime as ort
 
     batch = torch.randn(8, 3, INPUT_PX, INPUT_PX)
     with torch.no_grad():

@@ -11,6 +11,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
+import onnxruntime as ort
 import open_clip
 import torch
 import torch.nn.functional as F
@@ -49,8 +50,6 @@ def export(out: Path) -> None:
     )
     size_mb = sum(f.stat().st_size for f in out.parent.glob(f"{out.name}*")) / 1e6
     print(f"exported {out} ({size_mb:.0f} MB)")
-
-    import onnxruntime as ort
 
     sess = ort.InferenceSession(str(out), providers=["CPUExecutionProvider"])
     diff = 0.0

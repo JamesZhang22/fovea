@@ -1,16 +1,23 @@
 import sys
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 
+import numpy as np
+
+from fovea.core.detect.bird import DETECT_WIDTH_PX, BirdDetector, OnnxBirdDetector
+from fovea.core.detect.eye import EyeLocator
 from fovea.core.export.xmp import Sidecar, is_fovea_sidecar, sidecar_path, write_sidecar
 from fovea.core.group.burst import group_bursts
 from fovea.core.ingest import cr3, decode
 from fovea.core.ingest.cache import Cache
 from fovea.core.scan import scan_folder
 from fovea.core.score.blurtype import spectral_anisotropy
+from fovea.core.score.calibrate import Calibration
 from fovea.core.score.classical import metrics, rank_burst, to_gray
+from fovea.core.score.model import PATCH_PX, FocusScorer
+from fovea.core.species.classify import CROP_PAD_FRACTION, SpeciesClassifier, species_info
 
 RATING_BEST = 4
 RATING_TOP = 3
@@ -72,13 +79,9 @@ def run_pipeline(
         _eye_stage(entries, config, cache, tick)
 
     if config.score:
-        from fovea.core.score.calibrate import Calibration
-
         scorer = None
         focus_path = Path(config.focus_model)
         if focus_path.exists():
-            from fovea.core.score.model import FocusScorer
-
             scorer = FocusScorer(focus_path)
         calibration = Calibration(
             Path(config.calibration_path) if config.calibration_path else None
@@ -169,10 +172,6 @@ def _detect_stage(
     entries: list[dict], config: PipelineConfig, cache: Cache | None, tick: Progress
 ) -> None:
     """Annotate entries with bird boxes in full-resolution pixel coordinates."""
-    from dataclasses import asdict
-
-    from fovea.core.detect.bird import DETECT_WIDTH_PX, BirdDetector, OnnxBirdDetector
-
     detector = None
     kind = f"birds:{config.detect_threshold}"
     for n, e in enumerate(entries):
@@ -203,8 +202,6 @@ def _eye_stage(
     entries: list[dict], config: PipelineConfig, cache: Cache | None, tick: Progress
 ) -> None:
     """Locate the eye of each entry's most confident bird box."""
-    from fovea.core.detect.eye import EyeLocator
-
     model_path = Path(config.eye_model)
     locator = None
     kind = f"eye:{model_path.stat().st_mtime_ns}"
@@ -247,8 +244,6 @@ def _species_stage(
     bursts: list[list[dict]], config: PipelineConfig, cache: Cache | None, tick: Progress
 ) -> None:
     """Classify each burst's best frame once, annotate every frame of the burst."""
-    from fovea.core.species.classify import CROP_PAD_FRACTION, SpeciesClassifier
-
     model_path = Path(config.species_model)
     labels_path = Path(config.species_labels)
     if not model_path.exists() or not labels_path.exists():
@@ -322,10 +317,6 @@ def _score_entry(
 
 def _focus_score(entry: dict, jpeg: bytes, scorer) -> dict:
     """Ordinal model on the native-res eye patch, abstains on tiny eyes."""
-    import numpy as np
-
-    from fovea.core.score.model import PATCH_PX
-
     box = max(entry["birds"], key=lambda b: b["confidence"])
     box_px = max(box["x1"] - box["x0"], box["y1"] - box["y0"])
     if box_px < MIN_EYE_BOX_PX:
@@ -380,8 +371,6 @@ def species_keywords(entry: dict, config: PipelineConfig) -> list[str]:
             labels = Path(config.species_labels)
             scientific, family = (None, None)
             if labels.exists():
-                from fovea.core.species.classify import species_info
-
                 scientific, family = species_info(labels, confirmed)
             name = confirmed
     elif preds and preds[0]["confidence"] >= SPECIES_KEYWORD_MIN_CONFIDENCE:

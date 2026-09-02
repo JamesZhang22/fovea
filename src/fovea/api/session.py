@@ -7,7 +7,7 @@ from fovea.core.ingest.cache import Cache
 from fovea.core.pipeline import PipelineConfig, run_pipeline
 from fovea.core.resources import resource_path
 from fovea.core.score.calibrate import default_calibration_path
-from fovea.core.species.download import species_model_path
+from fovea.core.species.download import download_species_model, species_model_path
 
 PROGRESS_EVERY = 10  # progress events per stage are throttled to every Nth item
 
@@ -44,8 +44,6 @@ class Session:
 
     def start_model_download(self) -> None:
         """Fetch the species encoder on a worker thread, progress polled via status."""
-        from fovea.core.species.download import download_species_model
-
         with self.lock:
             if self.model_download["state"] == "downloading":
                 return

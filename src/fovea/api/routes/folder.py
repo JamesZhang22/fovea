@@ -19,6 +19,8 @@ from fovea.api.schemas import (
 from fovea.api.session import Session
 from fovea.core.pipeline import PipelineConfig, export_verdicts
 from fovea.core.resources import resource_path
+from fovea.core.species.classify import REGIONS, label_names
+from fovea.core.species.download import TOTAL_BYTES, species_model_path
 
 
 def folder_router(session: Session) -> APIRouter:
@@ -26,8 +28,6 @@ def folder_router(session: Session) -> APIRouter:
 
     @router.post("/api/folder", response_model=OpenFolderResponse)
     def open_folder(request: OpenFolderRequest) -> OpenFolderResponse:
-        from fovea.core.species.classify import REGIONS
-
         folder = Path(request.path).expanduser().resolve()
         if not folder.is_dir():
             raise HTTPException(404, f"not a directory: {folder}")
@@ -69,8 +69,6 @@ def folder_router(session: Session) -> APIRouter:
 
     @router.get("/api/species/model", response_model=SpeciesModelStatus)
     def species_model() -> SpeciesModelStatus:
-        from fovea.core.species.download import TOTAL_BYTES, species_model_path
-
         d = session.model_download
         return SpeciesModelStatus(
             present=species_model_path() is not None,
@@ -82,8 +80,6 @@ def folder_router(session: Session) -> APIRouter:
 
     @router.post("/api/species/model", response_model=SpeciesModelStatus)
     def download_species_model() -> SpeciesModelStatus:
-        from fovea.core.species.download import species_model_path
-
         if species_model_path() is None:
             session.start_model_download()
         return species_model()
@@ -93,8 +89,6 @@ def folder_router(session: Session) -> APIRouter:
         labels = resource_path("models/species_labels.npz")
         if not labels.exists():
             return []
-        from fovea.core.species.classify import label_names
-
         return label_names(labels)
 
     @router.post("/api/export", response_model=ExportResponse)

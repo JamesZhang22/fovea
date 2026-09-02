@@ -1,6 +1,7 @@
 import time
 from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
 
 from fovea.api.app import create_app
@@ -32,8 +33,6 @@ def test_empty_folder_pipeline(tmp_path: Path) -> None:
 
 
 def test_entries_and_images_on_real_folder() -> None:
-    import pytest
-
     folder = Path("data/labeling-set")
     if not folder.is_dir():
         pytest.skip("local dataset not present")

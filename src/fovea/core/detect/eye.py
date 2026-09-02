@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import numpy as np
+import onnxruntime as ort
 from PIL import Image
 
 from fovea.core.ingest.decode import roi_native
@@ -53,8 +54,6 @@ class EyeLocator:
     """Eye keypoint inference on bird crops, onnxruntime CPU."""
 
     def __init__(self, model_path: Path = DEFAULT_MODEL) -> None:
-        import onnxruntime as ort
-
         self.session = ort.InferenceSession(str(model_path), providers=["CPUExecutionProvider"])
 
     def locate(self, jpeg: bytes, box: dict) -> dict:

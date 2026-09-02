@@ -4,19 +4,22 @@ import sys
 from pathlib import Path
 
 from fovea import __version__
+from fovea.app.main import main as run_app
+from fovea.core.contactsheet import write_contactsheet
+from fovea.core.ingest.cache import Cache
+from fovea.core.pipeline import PipelineConfig, run_pipeline
+from fovea.core.scan import scan_folder
+from fovea.core.score.calibrate import default_calibration_path
+from fovea.core.species.classify import REGIONS
 
 
 def _folder_and_cache(args: argparse.Namespace):
-    from fovea.core.ingest.cache import Cache
-
     folder = Path(args.folder).expanduser().resolve()
     cache = None if args.no_cache else Cache(folder / ".fovea" / "cache.sqlite")
     return folder, cache
 
 
 def cmd_scan(args: argparse.Namespace) -> None:
-    from fovea.core.scan import scan_folder
-
     folder, cache = _folder_and_cache(args)
     entries = scan_folder(folder, cache)
     out = json.dumps(entries, indent=None if args.compact else 2)
@@ -37,11 +40,7 @@ def add_scan(sub) -> None:
 
 
 def cmd_cull(args: argparse.Namespace) -> None:
-    from fovea.core.pipeline import PipelineConfig, run_pipeline
-
     folder, cache = _folder_and_cache(args)
-    from fovea.core.score.calibrate import default_calibration_path
-
     config = PipelineConfig(
         group=not args.no_group,
         score=not args.no_score,
@@ -76,8 +75,7 @@ def add_cull(sub) -> None:
     )
     p.add_argument(
         "--region",
-        # keys of core.species.classify.REGIONS, not imported to keep CLI startup light
-        choices=["north-america", "south-america", "eurasia", "africa", "south-asia", "australasia"],
+        choices=sorted(REGIONS),
         help="restrict species candidates to a continent (default: all)",
     )
     p.add_argument("--no-group", action="store_true", help="skip burst grouping")
@@ -88,9 +86,6 @@ def add_cull(sub) -> None:
 
 
 def cmd_contactsheet(args: argparse.Namespace) -> None:
-    from fovea.core.contactsheet import write_contactsheet
-    from fovea.core.scan import scan_folder
-
     folder, cache = _folder_and_cache(args)
     entries = scan_folder(folder, cache)
     out_dir = Path(args.out) if args.out else folder / ".fovea" / "contactsheet"
@@ -107,8 +102,6 @@ def add_contactsheet(sub) -> None:
 
 
 def cmd_app(args: argparse.Namespace) -> None:
-    from fovea.app.main import main as run_app
-
     run_app()
 
 

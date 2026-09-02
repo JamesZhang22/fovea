@@ -5,6 +5,7 @@ bins per axis, soft-argmax gives a smooth coordinate, distribution entropy gives
 confidence for free.
 """
 
+import math
 from pathlib import Path
 
 import numpy as np
@@ -115,7 +116,5 @@ def decode(logits_x: torch.Tensor, logits_y: torch.Tensor) -> tuple[torch.Tensor
 
 def soft_target_peak() -> float:
     """Peak probability of a perfectly-predicted soft target, normalizes confidence to ~1."""
-    import math
-
     total = sum(math.exp(-(i**2) / (2 * TARGET_SIGMA_BINS**2)) for i in range(-40, 41))
     return 1.0 / total

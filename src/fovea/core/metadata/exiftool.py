@@ -1,4 +1,5 @@
 import json
+import shutil
 import subprocess
 from pathlib import Path
 from types import TracebackType
@@ -39,8 +40,6 @@ EXIFTOOL_FALLBACKS = ("/opt/homebrew/bin/exiftool", "/usr/local/bin/exiftool")
 
 
 def find_exiftool() -> str:
-    import shutil
-
     found = shutil.which("exiftool")
     if found:
         return found

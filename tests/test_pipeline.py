@@ -1,3 +1,4 @@
+from fovea.core.detect.bird import BirdBox
 from fovea.core.pipeline import RATING_BEST, RATING_TOP, rating_for, score_patch_box
 
 
@@ -37,8 +38,6 @@ def test_score_patch_box_clamps_to_image() -> None:
 
 
 def test_birdbox_scaled() -> None:
-    from fovea.core.detect.bird import BirdBox
-
     b = BirdBox(10.0, 20.0, 110.0, 220.0, 0.9).scaled(2.0)
     assert (b.x0, b.y0, b.x1, b.y1, b.confidence) == (20.0, 40.0, 220.0, 440.0, 0.9)
 

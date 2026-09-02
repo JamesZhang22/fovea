@@ -1,7 +1,11 @@
-import numpy as np
+import hashlib
 
-from fovea.core.pipeline import best_species_frame
-from fovea.core.species.classify import merge_groups
+import numpy as np
+import pytest
+
+from fovea.core.pipeline import PipelineConfig, best_species_frame, species_keywords
+from fovea.core.species import download
+from fovea.core.species.classify import merge_groups, region_mask
 
 
 def frame(focus=None, eye_conf=None, box_conf=0.9, birds=True) -> dict:
@@ -39,8 +43,6 @@ def pred(common="Great Egret", scientific="Ardea alba", family="Ardeidae", conf=
 
 
 def test_species_keywords_from_confident_prediction() -> None:
-    from fovea.core.pipeline import PipelineConfig, species_keywords
-
     entry = {"species": [pred()]}
     assert species_keywords(entry, PipelineConfig()) == [
         "Nature|Birds|Ardeidae|Great Egret",
@@ -49,15 +51,11 @@ def test_species_keywords_from_confident_prediction() -> None:
 
 
 def test_species_keywords_skips_low_confidence() -> None:
-    from fovea.core.pipeline import PipelineConfig, species_keywords
-
     entry = {"species": [pred(conf=0.3)]}
     assert species_keywords(entry, PipelineConfig()) == []
 
 
 def test_species_keywords_confirmed_wins_and_ignores_floor() -> None:
-    from fovea.core.pipeline import PipelineConfig, species_keywords
-
     entry = {
         "species": [pred(conf=0.3), pred("Snowy Egret", "Egretta thula", "Ardeidae", 0.2)],
         "user": {"species": "Snowy Egret"},
@@ -69,15 +67,11 @@ def test_species_keywords_confirmed_wins_and_ignores_floor() -> None:
 
 
 def test_species_keywords_without_family_or_common() -> None:
-    from fovea.core.pipeline import PipelineConfig, species_keywords
-
     entry = {"species": [pred(common=None, family=None)]}
     assert species_keywords(entry, PipelineConfig()) == ["Nature|Birds|Ardea alba"]
 
 
 def test_species_keywords_typed_correction_resolves_labels(tmp_path) -> None:
-    from fovea.core.pipeline import PipelineConfig, species_keywords
-
     labels = tmp_path / "labels.npz"
     np.savez(
         labels,
@@ -91,10 +85,6 @@ def test_species_keywords_typed_correction_resolves_labels(tmp_path) -> None:
 
 
 def test_download_species_model_verifies_and_installs(tmp_path, monkeypatch) -> None:
-    import hashlib
-
-    from fovea.core.species import download
-
     src = tmp_path / "release"
     src.mkdir()
     payload = b"tiny model bytes"
@@ -112,10 +102,6 @@ def test_download_species_model_verifies_and_installs(tmp_path, monkeypatch) -> 
 
 
 def test_download_species_model_rejects_bad_checksum(tmp_path, monkeypatch) -> None:
-    import pytest
-
-    from fovea.core.species import download
-
     src = tmp_path / "release"
     src.mkdir()
     (src / "species.onnx").write_bytes(b"tampered")
@@ -128,8 +114,6 @@ def test_download_species_model_rejects_bad_checksum(tmp_path, monkeypatch) -> N
 
 
 def test_region_mask_filters_by_code_and_fails_open() -> None:
-    from fovea.core.species.classify import region_mask
-
     regions = np.array(["NA,MA", "AF", "", "SO", "EU,OR"])
     assert region_mask(regions, None).all()
     assert region_mask(regions, "north-america").tolist() == [True, False, True, True, False]

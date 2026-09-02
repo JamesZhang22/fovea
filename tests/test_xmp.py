@@ -3,7 +3,14 @@ from pathlib import Path
 
 import pytest
 
-from fovea.core.export.xmp import Sidecar, render, sidecar_path, write_sidecar
+from fovea.core.export.xmp import (
+    FOVEA_NS,
+    Sidecar,
+    is_fovea_sidecar,
+    render,
+    sidecar_path,
+    write_sidecar,
+)
 
 RDF = "{http://www.w3.org/1999/02/22-rdf-syntax-ns#}"
 XMP = "{http://ns.adobe.com/xap/1.0/}"
@@ -75,8 +82,6 @@ def test_rejected_renders_xmpdm_good() -> None:
 
 
 def test_adobe_saved_sidecar_is_foreign(tmp_path: Path) -> None:
-    from fovea.core.export.xmp import FOVEA_NS, is_fovea_sidecar
-
     ours = tmp_path / "a.xmp"
     ours.write_text(render(Sidecar(rating=3)))
     assert is_fovea_sidecar(ours)

@@ -1,3 +1,4 @@
+import uvicorn
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
@@ -22,8 +23,6 @@ def create_app() -> FastAPI:
 
 
 def main() -> None:
-    import uvicorn
-
     uvicorn.run(create_app(), host=HOST, port=PORT, log_level="warning")
 
 

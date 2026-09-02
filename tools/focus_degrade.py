@@ -8,10 +8,12 @@ noisy soft frames.
 Usage: uv run python tools/focus_degrade.py preview   # strip image for eyeballing
 """
 
+import json
 import sys
 from pathlib import Path
 
 import numpy as np
+from PIL import Image
 
 from fovea.core.score.model import DEFOCUS_RADII_PX  # canonical ordinal levels
 
@@ -69,10 +71,6 @@ def apply_kernel(gray: np.ndarray, kernel: np.ndarray, rng: np.random.Generator)
 
 
 def preview() -> None:
-    import json
-
-    from PIL import Image
-
     corpus = Path("data/sharp-eyes")
     rejected = set(json.loads((corpus / "rejected.json").read_text()))
     kept = [r for r in json.loads((corpus / "index.json").read_text()) if r["id"] not in rejected]

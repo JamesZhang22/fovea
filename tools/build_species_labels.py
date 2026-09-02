@@ -16,6 +16,7 @@ from pathlib import Path
 
 import numpy as np
 import open_clip
+import openpyxl
 import torch
 from huggingface_hub import hf_hub_download
 
@@ -33,8 +34,6 @@ IOC_CODES = {
 
 def ioc_ranges(cache_dir: Path) -> dict[str, str]:
     """Scientific name -> comma-joined IOC breeding-range codes, parsed from the master list."""
-    import openpyxl
-
     xlsx = cache_dir / "ioc_master_list.xlsx"
     if not xlsx.exists():
         urllib.request.urlretrieve(IOC_URL, xlsx)

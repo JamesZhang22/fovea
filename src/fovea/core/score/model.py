@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import numpy as np
+import onnxruntime as ort
 
 # ordinal blur levels in native pixels, tools/focus_degrade.py trains against these
 DEFOCUS_RADII_PX = [0.0, 0.5, 1.0, 1.5, 2.25, 3.25, 4.5, 6.5, 9.0, 12.0]
@@ -45,8 +46,6 @@ class FocusScorer:
     """Ordinal defocus inference on native-res gray eye patches, onnxruntime CPU."""
 
     def __init__(self, model_path: Path = DEFAULT_MODEL) -> None:
-        import onnxruntime as ort
-
         self.session = ort.InferenceSession(str(model_path), providers=["CPUExecutionProvider"])
 
     def score(self, patch_gray: np.ndarray) -> dict:

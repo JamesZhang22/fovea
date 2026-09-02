@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+import numpy as np
+import onnxruntime as ort
 from PIL import Image
 
 BIRD_COCO_ID = 16  # original COCO category id for "bird", what predict returns
@@ -32,6 +34,7 @@ class BirdDetector:
     """
 
     def __init__(self, threshold: float = DEFAULT_THRESHOLD) -> None:
+        # deferred: rfdetr pulls torch, which must never be a runtime import
         from rfdetr import RFDETRNano
 
         self.model = RFDETRNano()
@@ -53,10 +56,6 @@ class OnnxBirdDetector:
     IMAGENET_STD = (0.229, 0.224, 0.225)
 
     def __init__(self, model_path, threshold: float = DEFAULT_THRESHOLD) -> None:
-        import numpy as np
-        import onnxruntime as ort
-
-        self.np = np
         self.session = ort.InferenceSession(str(model_path), providers=["CPUExecutionProvider"])
         self.input_name = self.session.get_inputs()[0].name
         self.input_px = self.session.get_inputs()[0].shape[2]
@@ -64,7 +63,6 @@ class OnnxBirdDetector:
 
     def _resize_no_antialias(self, im: Image.Image):
         """Plain bilinear sampling matching torch resize(antialias=False) at export time."""
-        np = self.np
         src = np.asarray(im, dtype=np.float32)
         h, w = src.shape[:2]
         n = self.input_px
@@ -82,7 +80,6 @@ class OnnxBirdDetector:
         )
 
     def detect(self, im: Image.Image) -> list[BirdBox]:
-        np = self.np
         arr = self._resize_no_antialias(im) / 255.0
         arr = (arr - self.IMAGENET_MEAN) / self.IMAGENET_STD
         arr = arr.transpose(2, 0, 1)[None].astype(np.float32)

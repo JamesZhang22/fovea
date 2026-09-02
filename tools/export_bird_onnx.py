@@ -11,15 +11,15 @@ import tempfile
 import time
 from pathlib import Path
 
+import numpy as np
+from rfdetr import RFDETRNano
+
+from fovea.core.detect.bird import OnnxBirdDetector
+from fovea.core.ingest import cr3
+from fovea.core.ingest.decode import decode_scaled
+
 
 def export(out: Path) -> None:
-    import numpy as np
-    from rfdetr import RFDETRNano
-
-    from fovea.core.detect.bird import OnnxBirdDetector
-    from fovea.core.ingest import cr3
-    from fovea.core.ingest.decode import decode_scaled
-
     model = RFDETRNano()
     with tempfile.TemporaryDirectory() as tmp:
         model.export(output_dir=tmp)

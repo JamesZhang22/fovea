@@ -3,6 +3,9 @@ import threading
 import time
 
 import uvicorn
+import webview
+
+from fovea.api.app import HOST, PORT, create_app
 
 
 def wait_for_port(host: str, port: int, timeout: float = 15.0) -> None:
@@ -17,10 +20,6 @@ def wait_for_port(host: str, port: int, timeout: float = 15.0) -> None:
 
 
 def main() -> None:
-    import webview
-
-    from fovea.api.app import HOST, PORT, create_app
-
     server = uvicorn.Server(uvicorn.Config(create_app(), host=HOST, port=PORT, log_level="warning"))
     threading.Thread(target=server.run, daemon=True).start()
     wait_for_port(HOST, PORT)

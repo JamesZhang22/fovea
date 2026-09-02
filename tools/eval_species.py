@@ -7,6 +7,7 @@ reviewer knows what they shot, so wrong IDs jump out immediately. Writes
 <folder>/.fovea/species_sheet.html per folder.
 """
 
+import argparse
 import base64
 import html
 import io
@@ -94,15 +95,13 @@ def build_sheet(folder: Path, region: str | None) -> None:
     out = folder / ".fovea" / f"species_sheet_{region or 'all'}.html"
     out.write_text(
         f"<!doctype html><style>{STYLE}</style><h3>{html.escape(str(folder))} · "
-        f'{region or "all regions"} · {len(cards)} bursts</h3>'
+        f"{region or 'all regions'} · {len(cards)} bursts</h3>"
         f'<div class="grid">{"".join(cards)}</div>'
     )
     print(f"{len(cards)} bursts -> {out}")
 
 
 if __name__ == "__main__":
-    import argparse
-
     parser = argparse.ArgumentParser()
     parser.add_argument("folders", nargs="+")
     parser.add_argument("--region", default=None)
