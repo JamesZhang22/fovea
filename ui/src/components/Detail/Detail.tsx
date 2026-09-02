@@ -21,6 +21,9 @@ interface Props {
 }
 
 const MAX_SCALE = 4;
+// hotkeys must not fire while a field or a portalled Radix panel has focus
+const HOTKEY_BLOCKERS =
+  "input, select, textarea, [contenteditable], [role='dialog'], [role='menu'], [role='listbox']";
 const CLICK_SLOP_PX = 5; // pointer travel below this counts as a click, not a drag
 
 interface Transform {
@@ -115,21 +118,17 @@ export function Detail({ entry, entries, onSelect, onClose, onUpdate, onUpdateMa
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      // typing in an input (species search, folder path) must not trigger hotkeys
-      if ((e.target as HTMLElement).tagName === "INPUT") return;
+      if ((e.target as HTMLElement).closest?.(HOTKEY_BLOCKERS)) return;
       const i = entries.findIndex((b) => b.id === entry.id);
       const step = (delta: number) => {
         const next = entries[i + delta];
         if (next) onSelect(next.id);
       };
-      if (e.key === "Escape") {
-        if (speciesOpen) setSpeciesOpen(false);
-        else onClose();
-      } else if (e.key === "s" && entry.species) {
+      if (e.key === "Escape") onClose();
+      else if (e.key === "s" && entry.species) {
         e.preventDefault();
         setSpeciesOpen((o) => !o);
-      }
-      else if (e.key === "e") setToggles((t) => ({ ...t, eye: !t.eye }));
+      } else if (e.key === "e") setToggles((t) => ({ ...t, eye: !t.eye }));
       else if (e.key === "a") setToggles((t) => ({ ...t, af: !t.af }));
       else if (e.key === "i") setToggles((t) => ({ ...t, info: !t.info }));
       else if (e.key === "ArrowLeft" || e.key === "j") step(-1);
@@ -155,7 +154,7 @@ export function Detail({ entry, entries, onSelect, onClose, onUpdate, onUpdateMa
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [entry, entries, onClose, onSelect, onUpdate, speciesOpen]);
+  }, [entry, entries, onClose, onSelect, onUpdate]);
 
   // preload neighbours so filmstrip flips feel instant
   useEffect(() => {
