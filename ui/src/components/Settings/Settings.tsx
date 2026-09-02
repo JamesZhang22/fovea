@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { Popover, Select, Switch, Tooltip } from "radix-ui";
 import {
   fetchSpeciesModel,
   startSpeciesModelDownload,
@@ -8,6 +9,13 @@ import { saveSettings, SPECIES_REGIONS, type PipelineSettings } from "../../lib/
 import "./Settings.css";
 
 const DOWNLOAD_POLL_MS = 1000;
+const ALL_REGIONS = "all"; // Select reserves the empty string, so null needs a sentinel
+
+const METRICS: [string, string][] = [
+  ["brenner", "brenner"],
+  ["tenengrad", "tenengrad"],
+  ["edge_sharpness", "edge sharpness"],
+];
 
 interface Props {
   settings: PipelineSettings;
@@ -17,7 +25,6 @@ interface Props {
 export function Settings({ settings, onChange }: Props) {
   const [open, setOpen] = useState(false);
   const [model, setModel] = useState<SpeciesModelStatus | null>(null);
-  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => saveSettings(settings), [settings]);
 
@@ -32,33 +39,33 @@ export function Settings({ settings, onChange }: Props) {
     return () => clearTimeout(t);
   }, [open, model]);
 
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: PointerEvent) => {
-      if (!ref.current?.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("pointerdown", onDown);
-    return () => document.removeEventListener("pointerdown", onDown);
-  }, [open]);
-
   const set = (patch: Partial<PipelineSettings>) => onChange({ ...settings, ...patch });
 
   return (
-    <div className="settings" ref={ref}>
-      <button
-        className={`settings-toggle${open ? " settings-toggle-open" : ""}`}
-        onClick={() => setOpen((o) => !o)}
-        title="settings"
-      >
-        ⚙
-      </button>
-      {open && (
-        <div className="settings-panel">
+    <Popover.Root open={open} onOpenChange={setOpen}>
+      <Tooltip.Root>
+        <Tooltip.Trigger asChild>
+          <Popover.Trigger asChild>
+            <button className="settings-toggle" aria-label="settings">
+              ⚙
+            </button>
+          </Popover.Trigger>
+        </Tooltip.Trigger>
+        <Tooltip.Portal>
+          <Tooltip.Content className="tooltip" sideOffset={6}>
+            settings
+            <Tooltip.Arrow className="tooltip-arrow" />
+          </Tooltip.Content>
+        </Tooltip.Portal>
+      </Tooltip.Root>
+
+      <Popover.Portal>
+        <Popover.Content className="settings-panel" align="end" sideOffset={8}>
           <div className="settings-title">Pipeline</div>
 
           <div className="settings-row">
             <span>Bird detection</span>
-            <Switch
+            <Toggle
               checked={settings.detect}
               onChange={(v) =>
                 set({ detect: v, eye: v && settings.eye, species: v && settings.species })
@@ -66,45 +73,34 @@ export function Settings({ settings, onChange }: Props) {
             />
           </div>
 
-          <div className={`settings-row${settings.detect ? "" : " settings-row-disabled"}`}>
-            <span>Eye scoring</span>
-            <Switch
+          <Row label="Eye scoring" disabled={!settings.detect}>
+            <Toggle
               checked={settings.eye}
               disabled={!settings.detect}
               onChange={(v) => set({ eye: v })}
             />
-          </div>
+          </Row>
 
-          <div className={`settings-row${settings.detect ? "" : " settings-row-disabled"}`}>
-            <span>Species ID</span>
+          <Row label="Species ID" disabled={!settings.detect}>
             {model && !model.present ? (
               <SpeciesDownload model={model} onStatus={setModel} />
             ) : (
-              <Switch
+              <Toggle
                 checked={settings.species}
                 disabled={!settings.detect}
                 onChange={(v) => set({ species: v })}
               />
             )}
-          </div>
+          </Row>
 
-          <div
-            className={`settings-row${settings.detect && settings.species ? "" : " settings-row-disabled"}`}
-          >
-            <span>Region</span>
-            <select
-              value={settings.species_region ?? ""}
+          <Row label="Region" disabled={!settings.detect || !settings.species}>
+            <Dropdown
+              value={settings.species_region ?? ALL_REGIONS}
               disabled={!settings.detect || !settings.species}
-              onChange={(e) => set({ species_region: e.target.value || null })}
-            >
-              <option value="">All regions</option>
-              {SPECIES_REGIONS.map(([key, label]) => (
-                <option key={key} value={key}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </div>
+              options={[[ALL_REGIONS, "All regions"], ...SPECIES_REGIONS]}
+              onChange={(v) => set({ species_region: v === ALL_REGIONS ? null : v })}
+            />
+          </Row>
 
           <div className="settings-row">
             <span>Burst gap</span>
@@ -123,20 +119,87 @@ export function Settings({ settings, onChange }: Props) {
 
           <div className="settings-row">
             <span>Rank metric</span>
-            <select
+            <Dropdown
               value={settings.metric}
-              onChange={(e) => set({ metric: e.target.value as PipelineSettings["metric"] })}
-            >
-              <option value="brenner">brenner</option>
-              <option value="tenengrad">tenengrad</option>
-              <option value="edge_sharpness">edge sharpness</option>
-            </select>
+              options={METRICS}
+              onChange={(v) => set({ metric: v as PipelineSettings["metric"] })}
+            />
           </div>
 
           <div className="settings-note">Applies on next folder open</div>
-        </div>
-      )}
+        </Popover.Content>
+      </Popover.Portal>
+    </Popover.Root>
+  );
+}
+
+function Row({
+  label,
+  disabled,
+  children,
+}: {
+  label: string;
+  disabled: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className={`settings-row${disabled ? " settings-row-disabled" : ""}`}>
+      <span>{label}</span>
+      {children}
     </div>
+  );
+}
+
+function Toggle({
+  checked,
+  disabled,
+  onChange,
+}: {
+  checked: boolean;
+  disabled?: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <Switch.Root
+      className="switch"
+      checked={checked}
+      disabled={disabled}
+      onCheckedChange={onChange}
+    >
+      <Switch.Thumb className="switch-knob" />
+    </Switch.Root>
+  );
+}
+
+function Dropdown({
+  value,
+  disabled,
+  options,
+  onChange,
+}: {
+  value: string;
+  disabled?: boolean;
+  options: [string, string][];
+  onChange: (v: string) => void;
+}) {
+  return (
+    <Select.Root value={value} disabled={disabled} onValueChange={onChange}>
+      <Select.Trigger className="select-trigger" aria-label={value}>
+        <Select.Value />
+        <Select.Icon>▾</Select.Icon>
+      </Select.Trigger>
+      <Select.Portal>
+        <Select.Content className="select-content" position="popper" sideOffset={4}>
+          <Select.Viewport>
+            {options.map(([v, label]) => (
+              <Select.Item key={v} className="select-item" value={v}>
+                <Select.ItemText>{label}</Select.ItemText>
+              </Select.Item>
+            ))}
+          </Select.Viewport>
+        </Select.Content>
+      </Select.Portal>
+    </Select.Root>
   );
 }
 
@@ -162,27 +225,5 @@ function SpeciesDownload({
         {model.error ? "retry" : "download model · 1.2 GB"}
       </button>
     </span>
-  );
-}
-
-function Switch({
-  checked,
-  disabled,
-  onChange,
-}: {
-  checked: boolean;
-  disabled?: boolean;
-  onChange: (v: boolean) => void;
-}) {
-  return (
-    <button
-      className={`switch${checked ? " switch-on" : ""}`}
-      disabled={disabled}
-      role="switch"
-      aria-checked={checked}
-      onClick={() => onChange(!checked)}
-    >
-      <span className="switch-knob" />
-    </button>
   );
 }
