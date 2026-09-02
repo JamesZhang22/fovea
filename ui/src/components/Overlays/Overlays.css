@@ -6,25 +6,25 @@
 
 .ov-af {
   fill: none;
-  stroke: #ffdc00;
+  stroke: var(--ov-af);
   stroke-width: 6;
 }
 
 .ov-af-focus {
   fill: none;
-  stroke: #ff2828;
+  stroke: var(--ov-af-focus);
   stroke-width: 6;
 }
 
 .ov-eye {
   fill: none;
-  stroke: #00dcff;
+  stroke: var(--ov-eye);
   stroke-width: 6;
 }
 
 .ov-eye-weak {
   fill: none;
-  stroke: #00dcff;
+  stroke: var(--ov-eye);
   stroke-width: 6;
   stroke-dasharray: 20 14;
   opacity: 0.6;

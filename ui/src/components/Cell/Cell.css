@@ -1,25 +1,25 @@
 .cell {
-  background: #1c1c1c;
-  border: 1px solid #2a2a2a;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
   border-radius: 6px;
   overflow: hidden;
   cursor: pointer;
 }
 
 .cell:hover {
-  border-color: #444;
+  border-color: var(--border-hover);
 }
 
 .cell-selected {
-  border-color: #2b6cb0;
-  outline: 1px solid #2b6cb0;
+  border-color: var(--accent);
+  outline: 1px solid var(--accent);
 }
 
 .cell img {
   width: 100%;
   object-fit: cover;
   display: block;
-  background: #111;
+  background: var(--surface-void);
 }
 
 .cell-bar {
@@ -34,26 +34,26 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: #999;
+  color: var(--text-muted);
   font-size: 12px;
 }
 
 .badge {
-  background: #2a2a2a;
+  background: var(--surface-hover);
   border-radius: 4px;
   padding: 1px 6px;
   font-size: 11px;
-  color: #aaa;
+  color: var(--text-muted);
 }
 
 .badge-best {
-  background: #3a3413;
-  color: #ffd85e;
+  background: var(--warn-tone);
+  color: var(--warn);
 }
 
 .badge-eye {
-  background: #10333d;
-  color: #4dd7f5;
+  background: var(--info-tone);
+  color: var(--info);
 }
 
 .cell-rejected img {
@@ -61,11 +61,11 @@
 }
 
 .badge-reject {
-  background: #3d1414;
-  color: #ff6b6b;
+  background: var(--reject-tone);
+  color: var(--reject);
 }
 
 .badge-rating {
-  background: #143d24;
-  color: #6bff9e;
+  background: var(--good-tone);
+  color: var(--good);
 }

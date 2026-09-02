@@ -9,30 +9,30 @@ header {
   align-items: center;
   gap: 10px;
   padding: 8px 12px;
-  border-bottom: 1px solid #2a2a2a;
+  border-bottom: 1px solid var(--border);
 }
 
 .logo {
   font-weight: 600;
   letter-spacing: 0.04em;
-  color: #eee;
+  color: var(--text-bright);
 }
 
 header input {
   flex: 0 1 420px;
-  background: #1e1e1e;
-  border: 1px solid #333;
+  background: var(--surface-inset);
+  border: 1px solid var(--border-strong);
   border-radius: 5px;
-  color: #ddd;
+  color: var(--text);
   padding: 5px 9px;
   font: inherit;
 }
 
 header button {
-  background: #2b6cb0;
+  background: var(--accent);
   border: none;
   border-radius: 5px;
-  color: #fff;
+  color: var(--text-on-accent);
   padding: 5px 14px;
   font: inherit;
   cursor: pointer;
@@ -44,12 +44,12 @@ header button:disabled {
 }
 
 .progress {
-  color: #888;
+  color: var(--text-muted);
   font-variant-numeric: tabular-nums;
 }
 
 .error {
-  color: #f66;
+  color: var(--reject);
 }
 
 .spacer {
@@ -57,7 +57,7 @@ header button:disabled {
 }
 
 .export-ok {
-  color: #6bff9e;
+  color: var(--good);
   font-weight: 600;
   animation: export-pop 0.25s ease-out;
 }

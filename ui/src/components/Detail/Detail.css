@@ -9,7 +9,7 @@
   flex: 1;
   position: relative;
   overflow: hidden;
-  background: #0c0c0c;
+  background: var(--surface-void);
   cursor: zoom-in;
 }
 
@@ -40,37 +40,37 @@
   display: flex;
   gap: 16px;
   padding: 6px 12px;
-  background: rgba(10, 10, 10, 0.75);
+  background: var(--scrim);
   font-variant-numeric: tabular-nums;
 }
 
 .infobar .dim {
   margin-left: auto;
-  color: #666;
+  color: var(--text-dim);
 }
 
 .ib-rating {
-  color: #6bff9e;
+  color: var(--good);
 }
 
 .ib-reject {
-  color: #ff6b6b;
+  color: var(--reject);
   font-weight: 600;
 }
 
 .ib-score {
-  color: #4dd7f5;
+  color: var(--info);
   font-weight: 600;
 }
 
 .ib-abstain {
-  color: #777;
+  color: var(--text-dim);
 }
 
 .ib-species {
-  color: #d7b24d;
+  color: var(--warn);
 }
 
 .ib-species-confirmed {
-  color: #6bff9e;
+  color: var(--good);
 }

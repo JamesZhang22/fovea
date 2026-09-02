@@ -3,8 +3,8 @@
   gap: 6px;
   padding: 8px;
   overflow-x: auto;
-  border-top: 1px solid #2a2a2a;
-  background: #161616;
+  border-top: 1px solid var(--border);
+  background: var(--surface-base);
 }
 
 .strip-burst {
@@ -16,8 +16,8 @@
 }
 
 .strip-burst-multi {
-  border: 1px solid #3a3a3a;
-  background: #1d1d1d;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-raised);
 }
 
 .strip-cell {
@@ -39,15 +39,15 @@
 }
 
 .strip-current {
-  border-color: #2b6cb0;
+  border-color: var(--accent);
 }
 
 .strip-star {
   position: absolute;
   top: 2px;
   right: 4px;
-  color: #ffd85e;
-  text-shadow: 0 0 4px #000;
+  color: var(--warn);
+  text-shadow: var(--shadow-text);
 }
 
 .strip-rejected img {
@@ -58,7 +58,7 @@
   position: absolute;
   bottom: 2px;
   left: 4px;
-  color: #6bff9e;
+  color: var(--good);
   font-size: 11px;
-  text-shadow: 0 0 4px #000;
+  text-shadow: var(--shadow-text);
 }
