@@ -32,7 +32,7 @@ from fovea.core.ingest.decode import roi_native
 from fovea.core.scan import scan_folder
 
 PREP = Path("data/own-prep")
-MODEL_OUT = Path("models/eye_own.pt")  # rename with a version suffix after a good run
+MODEL_OUT = Path("models/eye_own.pt")  # rename with a version suffix after a good run.
 BOX_PAD_FRACTION = 0.15
 VAL_FRACTION = 0.15
 EPOCHS = 60
@@ -174,7 +174,7 @@ if __name__ == "__main__":
         folder = Path(arg).expanduser().resolve()
         folder_rows = prep(folder / "eye_labels.jsonl", folder)
         for rec in folder_rows:
-            # keep burst ids distinct across folders so the split stays leak-free
+            # keep burst ids distinct across folders so the split stays leak-free.
             rec["burst"] = rec["burst"] + fi * 100_000 if rec["burst"] >= 0 else rec["burst"]
         rows.extend(folder_rows)
         print(f"{folder.name}: {len(folder_rows)} labeled crops")

@@ -21,10 +21,10 @@ interface Props {
 }
 
 const MAX_SCALE = 4;
-// hotkeys must not fire while a field or a portalled Radix panel has focus
+// hotkeys must not fire while a field or a portalled Radix panel has focus.
 const HOTKEY_BLOCKERS =
   "input, select, textarea, [contenteditable], [role='dialog'], [role='menu'], [role='listbox']";
-const CLICK_SLOP_PX = 5; // pointer travel below this counts as a click, not a drag
+const CLICK_SLOP_PX = 5; // pointer travel below this counts as a click, not a drag.
 
 interface Transform {
   scale: number;
@@ -35,7 +35,7 @@ interface Transform {
 export function Detail({ entry, entries, onSelect, onClose, onUpdate, onUpdateMany }: Props) {
   const viewRef = useRef<HTMLDivElement>(null);
   const [view, setView] = useState({ w: 800, h: 600 });
-  const [transform, setTransform] = useState<Transform | null>(null); // null = fit, centered
+  const [transform, setTransform] = useState<Transform | null>(null); // null = fit, centered.
   const [toggles, setToggles] = useState<OverlayToggles>({ eye: true, af: true, info: true });
   const [loadedId, setLoadedId] = useState<number | null>(null);
   const [speciesOpen, setSpeciesOpen] = useState(false);
@@ -54,7 +54,7 @@ export function Detail({ entry, entries, onSelect, onClose, onUpdate, onUpdateMa
     return () => ro.disconnect();
   }, []);
 
-  // swap frames only after full decode, a half-decoded 6960px JPEG paints torn
+  // swap frames only after full decode, a half-decoded 6960px JPEG paints torn.
   useEffect(() => {
     let alive = true;
     const im = new Image();
@@ -67,7 +67,7 @@ export function Detail({ entry, entries, onSelect, onClose, onUpdate, onUpdateMa
     };
   }, [entry.id]);
 
-  // reset to fit when the frame changes
+  // reset to fit when the frame changes.
   useEffect(() => setTransform(null), [entry.id]);
 
   const clampPos = useCallback(
@@ -88,7 +88,7 @@ export function Detail({ entry, entries, onSelect, onClose, onUpdate, onUpdateMa
     [fitScale, pos.x, pos.y, scale, clampPos],
   );
 
-  // wheel must be non-passive to preventDefault, React's synthetic handler is passive
+  // wheel must be non-passive to preventDefault, React's synthetic handler is passive.
   useEffect(() => {
     const el = viewRef.current;
     if (!el) return;
@@ -156,7 +156,7 @@ export function Detail({ entry, entries, onSelect, onClose, onUpdate, onUpdateMa
     return () => window.removeEventListener("keydown", onKey);
   }, [entry, entries, onClose, onSelect, onUpdate]);
 
-  // preload neighbours so filmstrip flips feel instant
+  // preload neighbours so filmstrip flips feel instant.
   useEffect(() => {
     const i = entries.findIndex((b) => b.id === entry.id);
     for (const n of [entries[i - 1], entries[i + 1]]) {
@@ -202,7 +202,7 @@ export function Detail({ entry, entries, onSelect, onClose, onUpdate, onUpdateMa
           if (zoomedIn) {
             setTransform(null);
           } else {
-            // zoom to 1:1 with the clicked image point centered
+            // zoom to 1:1 with the clicked image point centered.
             const ix = (vx - pos.x) / scale;
             const iy = (vy - pos.y) / scale;
             setTransform({ scale: 1, ...clampPos(view.w / 2 - ix, view.h / 2 - iy, 1) });

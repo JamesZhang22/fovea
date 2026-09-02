@@ -22,7 +22,7 @@ export function Filmstrip({ entries, currentId, onSelect }: Props) {
     return out;
   }, [entries]);
 
-  // center once on entry from the grid, afterwards only nudge frames back into view
+  // center once on entry from the grid, afterwards only nudge frames back into view.
   useEffect(() => {
     ref.current
       ?.querySelector(".strip-current")

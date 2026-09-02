@@ -7,7 +7,7 @@ from fovea.api.routes.images import images_router
 from fovea.api.session import Session
 from fovea.core.resources import resource_path
 
-HOST = "127.0.0.1"  # localhost only, never exposed to the network
+HOST = "127.0.0.1"  # localhost only, never exposed to the network.
 PORT = 7343
 
 

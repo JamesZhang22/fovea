@@ -24,7 +24,7 @@ TEMPLATE = """<?xpacket begin="﻿" id="W5M0MpCehiHzreSzNTczkc9d"?>
 @dataclass
 class Sidecar:
     rating: int | None = None
-    rejected: bool = False  # LrC round-trips its reject flag as xmpDM:good="False"
+    rejected: bool = False  # LrC round-trips its reject flag as xmpDM:good="False".
     label: str | None = None
     keywords: list[str] = field(default_factory=list)
     fovea: dict[str, object] = field(default_factory=dict)

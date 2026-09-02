@@ -5,7 +5,7 @@ from fovea.core.ingest.cache import Cache
 from fovea.core.metadata.canon_af import parse_af_frame
 from fovea.core.metadata.exiftool import ExifTool
 
-BATCH = 200  # files per exiftool invocation, keeps argument lists bounded
+BATCH = 200  # files per exiftool invocation, keeps argument lists bounded.
 
 
 def find_cr3s(folder: Path) -> list[Path]:

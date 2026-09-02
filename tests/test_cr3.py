@@ -28,7 +28,7 @@ def test_iter_boxes_walks_siblings() -> None:
 
 
 def test_parse_previews_finds_trak_jpeg_and_prvw() -> None:
-    mdat = box(b"mdat", JPEG)  # JPEG payload lands at file offset 8
+    mdat = box(b"mdat", JPEG)  # JPEG payload lands at file offset 8.
     trak = box(b"trak", box(b"mdia", box(b"minf", stbl(len(JPEG), 8))))
     moov = box(b"moov", trak)
     prvw_payload = b"\x00" * 8 + JPEG

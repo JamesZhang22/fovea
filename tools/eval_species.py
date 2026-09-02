@@ -23,7 +23,7 @@ from fovea.core.pipeline import PipelineConfig, best_species_frame, run_pipeline
 from fovea.core.species.classify import CROP_PAD_FRACTION
 
 THUMB_WIDTH_PX = 260
-CONFIDENT = 0.9  # card confidence coloring thresholds
+CONFIDENT = 0.9  # card confidence coloring thresholds.
 SHAKY = 0.5
 
 STYLE = """

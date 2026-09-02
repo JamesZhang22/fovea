@@ -25,7 +25,7 @@ def test_single_point_modes(mode: str) -> None:
 
 
 def test_whole_area_locked_coordinates() -> None:
-    # IMG_0001: box (783, -381, 174, 174), AF grid 6960x4640 == image dims
+    # IMG_0001: box (783, -381, 174, 174), AF grid 6960x4640 == image dims.
     frame = parse_af_frame(FIXTURES["whole_area_locked"])
     assert frame is not None
     (p,) = frame.points

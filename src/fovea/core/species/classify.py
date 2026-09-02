@@ -2,15 +2,15 @@ import numpy as np
 import onnxruntime as ort
 from PIL import Image
 
-IMAGE_PX = 224  # BioCLIP 2 input size, squash-resized without crop like its training
-CROP_PAD_FRACTION = 0.1  # context around the bird box helps CLIP-style models
+IMAGE_PX = 224  # BioCLIP 2 input size, squash-resized without crop like its training.
+CROP_PAD_FRACTION = 0.1  # context around the bird box helps CLIP-style models.
 TOP_K = 3
 
-# CLIP normalization constants, must match the training preprocessing
+# CLIP normalization constants, must match the training preprocessing.
 _MEAN = np.array([0.48145466, 0.4578275, 0.40821073], dtype=np.float32)
 _STD = np.array([0.26862954, 0.26130258, 0.27577711], dtype=np.float32)
 
-# region key -> IOC breeding-range codes, species without codes always pass the filter
+# region key -> IOC breeding-range codes, species without codes always pass the filter.
 REGIONS = {
     "north-america": {"NA", "MA"},
     "south-america": {"SA"},
@@ -19,7 +19,7 @@ REGIONS = {
     "south-asia": {"OR"},
     "australasia": {"AU"},
 }
-OCEANIC_CODES = {"AN", "AO", "PO", "IO", "TrO", "TO", "NO", "SO"}  # pelagics pass everywhere
+OCEANIC_CODES = {"AN", "AO", "PO", "IO", "TrO", "TO", "NO", "SO"}  # pelagics pass everywhere.
 
 
 def region_mask(regions: np.ndarray, region: str | None) -> np.ndarray:
@@ -82,7 +82,7 @@ class SpeciesClassifier:
         (emb,) = self.session.run(None, {"image": x})
         logits = self.logit_scale * (emb[0] @ self.emb.T)
         if self.mask is not None:
-            logits[~self.mask] = -np.inf  # softmax renormalizes over the allowed rows
+            logits[~self.mask] = -np.inf  # softmax renormalizes over the allowed rows.
         probs = np.exp(logits - logits.max())
         probs /= probs.sum()
         merged = merge_groups(probs, self.group_idx, len(self.rep_rows))

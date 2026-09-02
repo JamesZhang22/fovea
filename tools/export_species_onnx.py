@@ -38,7 +38,7 @@ def export(out: Path) -> None:
     encoder = VisualEncoder(model)
 
     # fixed batch 1: the stage scores one crop per burst, and the dynamo exporter
-    # bakes batch-1 reshapes into ViT attention that break dynamic axes anyway
+    # bakes batch-1 reshapes into ViT attention that break dynamic axes anyway.
     example = torch.randn(1, 3, IMAGE_PX, IMAGE_PX)
     torch.onnx.export(
         encoder,

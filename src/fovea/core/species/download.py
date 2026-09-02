@@ -14,7 +14,7 @@ from fovea.core.resources import resource_path
 
 RELEASE_URL_BASE = "https://github.com/JamesZhang22/fovea/releases/download/models-v1/"
 
-# (filename, sha256, bytes) of the exported encoder, pinned at export time
+# (filename, sha256, bytes) of the exported encoder, pinned at export time.
 MODEL_FILES = [
     ("species.onnx", "7192f5c4f561d56c658c8347f178ed394e8d54763d925bfc35353d761ca4f31f", 2307765),
     (

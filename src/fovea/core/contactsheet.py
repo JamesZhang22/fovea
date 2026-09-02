@@ -8,11 +8,11 @@ from fovea.core.ingest import cr3, decode
 
 THUMB_WIDTH_PX = 800
 
-# overlay colors
-IN_FOCUS = (255, 40, 40)  # red, AF points the camera reports as in focus
-REPORTED = (255, 220, 0)  # yellow, AF points reported but not in focus
-BIRD = (60, 220, 60)  # green, detected bird bounding boxes
-EYE = (0, 220, 255)  # cyan, detected eye keypoint
+# overlay colors.
+IN_FOCUS = (255, 40, 40)  # red, AF points the camera reports as in focus.
+REPORTED = (255, 220, 0)  # yellow, AF points reported but not in focus.
+BIRD = (60, 220, 60)  # green, detected bird bounding boxes.
+EYE = (0, 220, 255)  # cyan, detected eye keypoint.
 
 PAGE = """<!doctype html>
 <meta charset="utf-8"><title>fovea contact sheet</title>

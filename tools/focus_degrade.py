@@ -15,11 +15,11 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
-from fovea.core.score.model import DEFOCUS_RADII_PX  # canonical ordinal levels
+from fovea.core.score.model import DEFOCUS_RADII_PX  # canonical ordinal levels.
 
-MOTION_LENGTHS_PX = [3.0, 6.0, 10.0, 16.0]  # equivalent severity label = length / 2
+MOTION_LENGTHS_PX = [3.0, 6.0, 10.0, 16.0]  # equivalent severity label = length / 2.
 SUPERSAMPLE = 8
-NOISE_STD_DN = 1.5  # sensor-ish noise applied after blur
+NOISE_STD_DN = 1.5  # sensor-ish noise applied after blur.
 
 
 def disc_kernel(radius_px: float) -> np.ndarray:
@@ -33,7 +33,7 @@ def disc_kernel(radius_px: float) -> np.ndarray:
     yy, xx = np.meshgrid(coords, coords, indexing="ij")
     fine = (yy**2 + xx**2 <= radius_px**2).astype(np.float32)
     kernel = fine.reshape(n, ss, n, ss).mean(axis=(1, 3))
-    if kernel.sum() == 0:  # radius below the supersample pitch, effectively no blur
+    if kernel.sum() == 0:  # radius below the supersample pitch, effectively no blur.
         return np.ones((1, 1), dtype=np.float32)
     return kernel / kernel.sum()
 

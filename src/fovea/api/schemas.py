@@ -65,7 +65,7 @@ class SpeciesPrediction(BaseModel):
 
 class SpeciesRequest(BaseModel):
     burst: int
-    common: str | None  # None clears the confirmation
+    common: str | None  # None clears the confirmation.
 
 
 class SpeciesModelStatus(BaseModel):
@@ -83,7 +83,7 @@ class ExportResponse(BaseModel):
 
 class RateRequest(BaseModel):
     id: int
-    rating: int | None = None  # 0 clears, 1-5 sets
+    rating: int | None = None  # 0 clears, 1-5 sets.
     rejected: bool | None = None
 
 

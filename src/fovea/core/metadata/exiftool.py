@@ -33,9 +33,9 @@ TAGS = [
     "EyeDetection",
 ]
 
-SENTINEL = b"{ready}"  # exiftool prints this after each -execute completes
+SENTINEL = b"{ready}"  # exiftool prints this after each -execute completes.
 
-# Finder-launched apps get a minimal PATH, so check Homebrew locations explicitly
+# Finder-launched apps get a minimal PATH, so check Homebrew locations explicitly.
 EXIFTOOL_FALLBACKS = ("/opt/homebrew/bin/exiftool", "/usr/local/bin/exiftool")
 
 

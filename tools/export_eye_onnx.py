@@ -19,7 +19,7 @@ import torch
 sys.path.insert(0, str(Path(__file__).parent))
 from eye_net import INPUT_PX, EyeNet
 
-TOLERANCE = 1e-3  # max abs logit difference allowed vs torch
+TOLERANCE = 1e-3  # max abs logit difference allowed vs torch.
 
 
 def export(weights: Path, out: Path) -> None:
@@ -58,7 +58,7 @@ def export(weights: Path, out: Path) -> None:
         status = "OK" if max(dx, dy) < TOLERANCE else "DIVERGED"
         print(f"{used}: max diff x={dx:.2e} y={dy:.2e} | {dt:.1f} ms/img | {status}")
         if status == "DIVERGED" and used == "CPUExecutionProvider":
-            sys.exit(1)  # CPU is the runtime EP, CoreML results are informational
+            sys.exit(1)  # CPU is the runtime EP, CoreML results are informational.
 
 
 if __name__ == "__main__":

@@ -7,7 +7,7 @@ export type AFPoint = components["schemas"]["AFPoint"];
 export type SpeciesPrediction = components["schemas"]["SpeciesPrediction"];
 export type SpeciesModelStatus = components["schemas"]["SpeciesModelStatus"];
 
-// SSE events are outside the OpenAPI schema, mirrored from api/session.py
+// SSE events are outside the OpenAPI schema, mirrored from api/session.py.
 export interface ProgressEvent {
   type: "progress" | "done" | "error";
   stage?: string;

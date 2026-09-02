@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-LATTICE_THRESHOLD = 100  # ValidAFPoints above this means the R7 dumped its full AF lattice
+LATTICE_THRESHOLD = 100  # ValidAFPoints above this means the R7 dumped its full AF lattice.
 
 
 @dataclass(frozen=True)
@@ -23,7 +23,7 @@ class AFFrame:
 
     @property
     def display_points(self) -> list[AFPoint]:
-        # full-lattice reports (Whole Area, no subject lock): only in-focus cells carry signal
+        # full-lattice reports (Whole Area, no subject lock): only in-focus cells carry signal.
         if self.lattice:
             return [p for p in self.points if p.in_focus]
         return self.points
@@ -60,7 +60,7 @@ def parse_af_frame(meta: dict) -> AFFrame | None:
     img_w, img_h = meta.get("ImageWidth"), meta.get("ImageHeight")
     if not (af_w and af_h and img_w and img_h):
         return None
-    # AF math happens in landscape sensor space
+    # AF math happens in landscape sensor space.
     if img_w < img_h:
         img_w, img_h = img_h, img_w
     sx, sy = img_w / af_w, img_h / af_h
@@ -77,7 +77,7 @@ def parse_af_frame(meta: dict) -> AFFrame | None:
     points = [
         AFPoint(
             cx=(af_w / 2 + xs[i]) * sx,
-            cy=(af_h / 2 - ys[i]) * sy,  # EOS: positive Y is up
+            cy=(af_h / 2 - ys[i]) * sy,  # EOS: positive Y is up.
             w=ws[i] * sx,
             h=hs[i] * sy,
             in_focus=i in in_focus,

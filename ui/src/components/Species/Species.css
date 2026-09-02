@@ -1,4 +1,4 @@
-/* zero-size point in the loupe that the popover anchors to */
+/* zero-size point in the loupe that the popover anchors to. */
 .species-anchor {
   position: absolute;
   left: 12px;

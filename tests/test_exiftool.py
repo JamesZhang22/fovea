@@ -20,6 +20,6 @@ def test_stay_open_batch(tmp_path: Path) -> None:
         results = et.metadata(paths, tags=["SourceFile", "ImageWidth", "ImageHeight"])
         assert len(results) == 3
         assert sorted(r["ImageWidth"] for r in results) == [10, 11, 12]
-        # second batch on the same process
+        # second batch on the same process.
         again = et.metadata(paths[:1], tags=["ImageHeight"])
         assert again[0]["ImageHeight"] == 20

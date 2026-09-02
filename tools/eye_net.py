@@ -17,9 +17,9 @@ from torch.utils.data import Dataset
 from torchvision.models import MobileNet_V3_Small_Weights, mobilenet_v3_small
 
 INPUT_PX = 192
-CROP_PX = 256  # stored crop size, augmentation crops down to INPUT_PX
-BINS_PER_AXIS = INPUT_PX * 2  # half-pixel resolution
-TARGET_SIGMA_BINS = 8.0  # gaussian spread of the soft training target
+CROP_PX = 256  # stored crop size, augmentation crops down to INPUT_PX.
+BINS_PER_AXIS = INPUT_PX * 2  # half-pixel resolution.
+TARGET_SIGMA_BINS = 8.0  # gaussian spread of the soft training target.
 
 
 class EyeCrops(Dataset):
@@ -45,7 +45,7 @@ class EyeCrops(Dataset):
         rng = np.random.default_rng()
 
         if not self.augment:
-            # whole-crop resize matches inference, keeps every eval sample
+            # whole-crop resize matches inference, keeps every eval sample.
             im = im.resize((INPUT_PX, INPUT_PX), Image.BILINEAR)
             s = INPUT_PX / CROP_PX
             eyes = [[ex * s, ey * s] for ex, ey in eyes]

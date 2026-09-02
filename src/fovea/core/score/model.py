@@ -3,17 +3,17 @@ from pathlib import Path
 import numpy as np
 import onnxruntime as ort
 
-# ordinal blur levels in native pixels, tools/focus_degrade.py trains against these
+# ordinal blur levels in native pixels, tools/focus_degrade.py trains against these.
 DEFOCUS_RADII_PX = [0.0, 0.5, 1.0, 1.5, 2.25, 3.25, 4.5, 6.5, 9.0, 12.0]
 N_LEVELS = len(DEFOCUS_RADII_PX)
-PATCH_PX = 96  # native-resolution model input
+PATCH_PX = 96  # native-resolution model input.
 
 # published radius -> score curve, <=1px is one "critically sharp" band because the
-# corpus anchors carry camera optics + processing blur (see context/learnings.md)
+# corpus anchors carry camera optics + processing blur (see context/learnings.md).
 CURVE_RADII_PX = [0.0, 1.0, 2.0, 3.25, 4.5, 6.5, 12.0]
 CURVE_SCORES = [100.0, 85.0, 70.0, 55.0, 40.0, 20.0, 0.0]
 
-MIN_CONFIDENCE = 0.15  # entropy confidence below this abstains, calibrated in M5 step 6
+MIN_CONFIDENCE = 0.15  # entropy confidence below this abstains, calibrated in M5 step 6.
 DEFAULT_MODEL = Path("models/focus.onnx")
 
 

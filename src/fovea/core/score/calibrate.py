@@ -6,7 +6,7 @@ N_BINS = 120
 MAX_RADIUS_PX = 12.0
 
 # reference distribution of blur radii from a real mixed R7 library, keeps early-use
-# percentiles sane until the user's own history dominates (~300 seed samples)
+# percentiles sane until the user's own history dominates (~300 seed samples).
 # fmt: off
 SEED = [1, 3, 6, 8, 10, 10, 10, 9, 8, 8, 8, 7, 6, 5, 4, 4, 4, 3, 4, 4, 4, 4, 4, 3, 3, 3,
         3, 3, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 2, 2, 1, 1, 2,

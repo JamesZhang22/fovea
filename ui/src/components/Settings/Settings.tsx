@@ -9,7 +9,7 @@ import { saveSettings, SPECIES_REGIONS, type PipelineSettings } from "../../lib/
 import "./Settings.css";
 
 const DOWNLOAD_POLL_MS = 1000;
-const ALL_REGIONS = "all"; // Select reserves the empty string, so null needs a sentinel
+const ALL_REGIONS = "all"; // Select reserves the empty string, so null needs a sentinel.
 
 const METRICS: [string, string][] = [
   ["brenner", "brenner"],
@@ -28,7 +28,7 @@ export function Settings({ settings, onChange }: Props) {
 
   useEffect(() => saveSettings(settings), [settings]);
 
-  // model status on open, poll while a download runs
+  // model status on open, poll while a download runs.
   useEffect(() => {
     if (!open) return;
     fetchSpeciesModel().then(setModel);

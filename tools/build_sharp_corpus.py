@@ -21,10 +21,10 @@ from fovea.core.ingest.decode import roi_native
 from fovea.core.scan import scan_folder
 from fovea.core.score.classical import metrics, to_gray
 
-PATCH_PX = 96  # fixed native-resolution crop, the focus model's input size
-MIN_BOX_PX = 400  # below this the eye is too small to define "sharp"
-MIN_MEAN_LUMA = 35.0  # darker patches are noise traps for contrast-normalized metrics
-MIN_GRAY_STD = 18.0  # flat patches carry no edges worth anchoring on
+PATCH_PX = 96  # fixed native-resolution crop, the focus model's input size.
+MIN_BOX_PX = 400  # below this the eye is too small to define "sharp".
+MIN_MEAN_LUMA = 35.0  # darker patches are noise traps for contrast-normalized metrics.
+MIN_GRAY_STD = 18.0  # flat patches carry no edges worth anchoring on.
 
 
 def collect(folders: list[Path]) -> list[dict]:
@@ -95,7 +95,7 @@ def select_sharp(rows: list[dict]) -> list[dict]:
         if cur is None or r["combined"] > cur["combined"]:
             best_per_burst[r["burst"]] = r
     # within-burst metric ranking is trustworthy, the global cutoff is not — human
-    # curation via the sheet is the only cross-subject filter
+    # curation via the sheet is the only cross-subject filter.
     return sorted(best_per_burst.values(), key=lambda r: -r["combined"])
 
 
@@ -112,7 +112,7 @@ def write_corpus(selected: list[dict], out: Path) -> None:
         ex, ey = r["eye"]
         half = PATCH_PX // 2
         patch = roi_native(jpeg, (int(ex - half), int(ey - half), int(ex + half), int(ey + half)))
-        patch.save(patches_dir / f"{r['id']}.png")  # lossless, no second jpeg pass
+        patch.save(patches_dir / f"{r['id']}.png")  # lossless, no second jpeg pass.
     (out / "index.json").write_text(json.dumps(selected))
 
 

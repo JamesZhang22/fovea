@@ -25,7 +25,7 @@ MODEL_STR = "hf-hub:imageomics/bioclip-2"
 CLASS_RANK_IDX = 2
 FAMILY_RANK_IDX = 4
 
-# IOC World Bird List (CC-BY 4.0), breeding-range codes drive the region filter
+# IOC World Bird List (CC-BY 4.0), breeding-range codes drive the region filter.
 IOC_URL = "https://worldbirdnames.org/master_ioc_list_v15.2.xlsx"
 IOC_CODES = {
     "NA", "MA", "SA", "EU", "AF", "OR", "AU", "AN", "AO", "PO", "IO", "TrO", "TO", "NO", "SO",
@@ -52,7 +52,7 @@ def ioc_ranges(cache_dir: Path) -> dict[str, str]:
 
 
 # TOL common-name casing is inconsistent ("Great blue heron"), normalize to bird-name
-# title case, connector words stay lowercase ("Greater Bird-of-paradise" style)
+# title case, connector words stay lowercase ("Greater Bird-of-paradise" style).
 LOWERCASE_WORDS = {"of", "the", "and"}
 
 

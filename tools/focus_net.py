@@ -13,7 +13,7 @@ from fovea.core.score.model import DEFOCUS_RADII_PX
 
 PATCH_PX = 96
 N_LEVELS = len(DEFOCUS_RADII_PX)
-TARGET_SIGMA_LEVELS = 0.7  # gaussian spread of the soft ordinal target
+TARGET_SIGMA_LEVELS = 0.7  # gaussian spread of the soft ordinal target.
 
 
 class FocusNet(nn.Module):

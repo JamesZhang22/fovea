@@ -4,9 +4,9 @@ import numpy as np
 import onnxruntime as ort
 from PIL import Image
 
-BIRD_COCO_ID = 16  # original COCO category id for "bird", what predict returns
-DETECT_WIDTH_PX = 1740  # decode width fed to the detector, it resizes internally anyway
-DEFAULT_THRESHOLD = 0.4  # minimum detection confidence
+BIRD_COCO_ID = 16  # original COCO category id for "bird", what predict returns.
+DETECT_WIDTH_PX = 1740  # decode width fed to the detector, it resizes internally anyway.
+DEFAULT_THRESHOLD = 0.4  # minimum detection confidence.
 
 
 @dataclass(frozen=True)
@@ -34,7 +34,7 @@ class BirdDetector:
     """
 
     def __init__(self, threshold: float = DEFAULT_THRESHOLD) -> None:
-        # deferred: rfdetr pulls torch, which must never be a runtime import
+        # deferred: rfdetr pulls torch, which must never be a runtime import.
         from rfdetr import RFDETRNano
 
         self.model = RFDETRNano()
@@ -66,7 +66,7 @@ class OnnxBirdDetector:
         src = np.asarray(im, dtype=np.float32)
         h, w = src.shape[:2]
         n = self.input_px
-        # torchvision maps output centers to input coords as (i + 0.5) * scale - 0.5
+        # torchvision maps output centers to input coords as (i + 0.5) * scale - 0.5.
         ys = np.clip((np.arange(n) + 0.5) * (h / n) - 0.5, 0, h - 1)
         xs = np.clip((np.arange(n) + 0.5) * (w / n) - 0.5, 0, w - 1)
         y0, x0 = np.floor(ys).astype(int), np.floor(xs).astype(int)
@@ -85,7 +85,7 @@ class OnnxBirdDetector:
         arr = arr.transpose(2, 0, 1)[None].astype(np.float32)
 
         dets, labels = self.session.run(None, {self.input_name: arr})
-        scores = 1.0 / (1.0 + np.exp(-labels[0]))  # sigmoid over class logits
+        scores = 1.0 / (1.0 + np.exp(-labels[0]))  # sigmoid over class logits.
         bird_scores = scores[:, BIRD_COCO_ID]
         keep = bird_scores > self.threshold
 

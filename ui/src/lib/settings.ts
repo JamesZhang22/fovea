@@ -16,7 +16,7 @@ export const DEFAULT_SETTINGS: PipelineSettings = {
   metric: "brenner",
 };
 
-// keys match core REGIONS in species/classify.py
+// keys match core REGIONS in species/classify.py.
 export const SPECIES_REGIONS: [string, string][] = [
   ["north-america", "North America"],
   ["south-america", "South America"],

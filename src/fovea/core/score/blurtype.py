@@ -1,7 +1,7 @@
 import numpy as np
 
-N_ANGLE_BINS = 18  # angular sectors over 180 degrees, 10 degrees each
-MOTION_THRESHOLD = 0.3  # anisotropy above this reads as motion blur, below as defocus
+N_ANGLE_BINS = 18  # angular sectors over 180 degrees, 10 degrees each.
+MOTION_THRESHOLD = 0.3  # anisotropy above this reads as motion blur, below as defocus.
 
 
 def spectral_anisotropy(gray: np.ndarray) -> tuple[float, float]:

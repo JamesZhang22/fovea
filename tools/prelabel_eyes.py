@@ -24,7 +24,7 @@ from fovea.core.ingest.cache import Cache
 from fovea.core.ingest.decode import roi_native
 from fovea.core.pipeline import PipelineConfig, run_pipeline
 
-BOX_PAD_FRACTION = 0.15  # square padded crop
+BOX_PAD_FRACTION = 0.15  # square padded crop.
 
 
 def crop_region(box: dict) -> tuple[int, int, int, int]:

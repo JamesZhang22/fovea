@@ -9,7 +9,7 @@ from fovea.core.resources import resource_path
 from fovea.core.score.calibrate import default_calibration_path
 from fovea.core.species.download import download_species_model, species_model_path
 
-PROGRESS_EVERY = 10  # progress events per stage are throttled to every Nth item
+PROGRESS_EVERY = 10  # progress events per stage are throttled to every Nth item.
 
 
 class Session:
@@ -119,7 +119,7 @@ class Session:
                 self.entries = entries
             self.status = "ready"
             self.emit({"type": "done", "count": len(entries)})
-        except Exception as exc:  # surfaced to the UI instead of dying silently
+        except Exception as exc:  # surfaced to the UI instead of dying silently.
             self.status = "error"
             self.error = str(exc)
             self.emit({"type": "error", "message": str(exc)})

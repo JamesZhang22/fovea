@@ -22,9 +22,9 @@ from fovea.core.ingest import cr3, decode
 from fovea.core.ingest.cache import Cache
 from fovea.core.pipeline import PipelineConfig, run_pipeline
 
-BOX_PAD_FRACTION = 0.15  # context around the bird box so head poses near the edge stay visible
+BOX_PAD_FRACTION = 0.15  # context around the bird box so head poses near the edge stay visible.
 DISPLAY_WIDTH_PX = 1600
-HOST = "127.0.0.1"  # localhost only, never exposed to the network
+HOST = "127.0.0.1"  # localhost only, never exposed to the network.
 
 PAGE = """<!doctype html>
 <meta charset="utf-8"><title>fovea eye labeler</title>

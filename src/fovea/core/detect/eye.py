@@ -6,11 +6,11 @@ from PIL import Image
 
 from fovea.core.ingest.decode import roi_native
 
-# SimCC geometry, tools/eye_net.py trains against these same values
+# SimCC geometry, tools/eye_net.py trains against these same values.
 INPUT_PX = 192
-BINS_PER_AXIS = INPUT_PX * 2  # half-pixel resolution
-TARGET_SIGMA_BINS = 8.0  # gaussian spread of the soft training target
-BOX_PAD_FRACTION = 0.15  # square padded crop matching the training distribution
+BINS_PER_AXIS = INPUT_PX * 2  # half-pixel resolution.
+TARGET_SIGMA_BINS = 8.0  # gaussian spread of the soft training target.
+BOX_PAD_FRACTION = 0.15  # square padded crop matching the training distribution.
 
 DEFAULT_MODEL = Path("models/eye.onnx")
 

@@ -4,8 +4,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import BinaryIO
 
-HEADER_READ_BYTES = 200_000  # enough to cover ftyp + moov + uuid preview boxes on the R7
-JPEG_SOI = b"\xff\xd8"  # JPEG start-of-image marker
+HEADER_READ_BYTES = 200_000  # enough to cover ftyp + moov + uuid preview boxes on the R7.
+JPEG_SOI = b"\xff\xd8"  # JPEG start-of-image marker.
 
 
 @dataclass(frozen=True)

@@ -21,11 +21,11 @@ from fovea.core.species.classify import CROP_PAD_FRACTION, SpeciesClassifier, sp
 
 RATING_BEST = 4
 RATING_TOP = 3
-MIN_PATCH_PX = 256  # focus metrics get unstable below this patch size
-EYE_PATCH_FRACTION = 0.25  # eye patch side as a fraction of the bird box side
-EYE_MIN_CONFIDENCE = 0.5  # from the val error-vs-confidence curve, below this predictions are junk
-MIN_EYE_BOX_PX = 400  # bird box below this means the eye is too small to score honestly
-SPECIES_KEYWORD_MIN_CONFIDENCE = 0.5  # unconfirmed predictions below this stay out of sidecars
+MIN_PATCH_PX = 256  # focus metrics get unstable below this patch size.
+EYE_PATCH_FRACTION = 0.25  # eye patch side as a fraction of the bird box side.
+EYE_MIN_CONFIDENCE = 0.5  # from the val error-vs-confidence curve, below this predictions are junk.
+MIN_EYE_BOX_PX = 400  # bird box below this means the eye is too small to score honestly.
+SPECIES_KEYWORD_MIN_CONFIDENCE = 0.5  # unconfirmed predictions below this stay out of sidecars.
 
 
 @dataclass
@@ -44,8 +44,8 @@ class PipelineConfig:
     focus_model: str = "models/focus.onnx"
     species_model: str = "models/species.onnx"
     species_labels: str = "models/species_labels.npz"
-    species_region: str | None = None  # None searches all species, see classify.REGIONS
-    calibration_path: str | None = None  # None keeps percentiles seed-only, no persistence
+    species_region: str | None = None  # None searches all species, see classify.REGIONS.
+    calibration_path: str | None = None  # None keeps percentiles seed-only, no persistence.
     metric: str = "brenner"
     top_rank: float = 0.8
     workers: int = 10
@@ -309,7 +309,7 @@ def _score_entry(
     if scorer is not None and eye_used:
         m.update(_focus_score(entry, jpeg, scorer))
         if calibration is not None and m.get("focus_radius_px") is not None:
-            calibration.record(m["focus_radius_px"])  # newly computed only, cache hits skip
+            calibration.record(m["focus_radius_px"])  # newly computed only, cache hits skip.
     if cache:
         cache.put_json(path, kind, m)
     return m
