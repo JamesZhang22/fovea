@@ -1,3 +1,50 @@
+/* Dark-only by design: a neutral dark surround is what photo judgement needs. */
+:root {
+  /* neutral surfaces, darkest to lightest */
+  --surface-void: #0a0a0a; /* photo backdrop, nothing sits below this */
+  --surface-inset: #101010; /* recessed form fields */
+  --surface-base: #141414; /* app background */
+  --surface-raised: #1a1a1a; /* panels, cells, burst groups */
+  --surface-hover: #222; /* row hover, badges, small buttons */
+  --surface-hover-strong: #2c2c2c; /* hover on elements already at --surface-hover */
+
+  /* borders */
+  --border: #2a2a2a; /* hairlines and dividers */
+  --border-strong: #3a3a3a; /* form field and control edges */
+  --border-hover: #4a4a4a;
+
+  /* text, brightest to dimmest */
+  --text-bright: #eee;
+  --text: #ccc;
+  --text-muted: #909090;
+  --text-dim: #6e6e6e;
+  --text-on-accent: #fff;
+
+  /* semantic accents for chrome */
+  --accent: #2b6cb0; /* selection and primary actions */
+  --good: #6bff9e; /* confirmed, rated, sharp */
+  --info: #4dd7f5; /* focus score, eye located */
+  --warn: #ffd85e; /* best of burst, predicted species */
+  --reject: #ff6b6b;
+
+  /* tinted backgrounds, each pairs with the accent of the same name */
+  --good-tone: #143d24;
+  --info-tone: #10333d;
+  --warn-tone: #3a3413;
+  --reject-tone: #3d1414;
+
+  /* strokes drawn over photos, saturated to stay legible on any frame */
+  --ov-af: #ffdc00;
+  --ov-af-focus: #ff2828;
+  --ov-eye: #00dcff;
+
+  /* layers over photos */
+  --scrim: rgba(10, 10, 10, 0.75);
+  --scrim-panel: rgba(14, 14, 14, 0.95);
+  --shadow-panel: 0 12px 32px rgba(0, 0, 0, 0.55);
+  --shadow-text: 0 0 4px #000;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -10,7 +57,7 @@ body,
 }
 
 body {
-  background: #141414;
-  color: #ccc;
+  background: var(--surface-base);
+  color: var(--text);
   font: 13px system-ui, sans-serif;
 }
